@@ -169,7 +169,7 @@ function renderTodos(slug) {
     },
   });
   list.appendChild(h('div', { class: 'todo' }, [
-    h('span', { style: 'width:15px; text-align:center; color: var(--text-muted); font-size:13px;', text: '+' }),
+    h('span', { style: 'width:15px; text-align:center; color: var(--muted); font-size:13px;', text: '+' }),
     addInput,
   ]));
 

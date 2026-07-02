@@ -136,7 +136,7 @@ function renderUsage(c) {
 function renderStat(label, value) {
   return h('div', {}, [
     h('div', { class: 'label muted', style: 'font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;', text: label }),
-    h('div', { class: 'mono', style: 'font-size: 18px; color: var(--text-hi); margin-top: 2px;', text: value }),
+    h('div', { class: 'mono', style: 'font-size: 18px; color: var(--ink-hi); margin-top: 2px;', text: value }),
   ]);
 }
 

@@ -67,9 +67,12 @@ export function renderSidebar() {
 
     <div class="sidebar-footer">
       <span class="status-dot" aria-hidden="true"></span>
-      <span>local · nostr-shaped</span>
+      <span>Local</span>
+      <button class="theme-toggle" data-theme-toggle title="Toggle theme" aria-label="Toggle theme">${currentTheme() === 'light' ? '☾' : '☼'}</button>
     </div>
   `;
+  const toggle = sidebarEl.querySelector('[data-theme-toggle]');
+  if (toggle) toggle.addEventListener('click', (e) => { e.stopPropagation(); toggleTheme(); renderSidebar(); });
   sidebarEl.querySelectorAll('.nav-item').forEach((el) => {
     el.addEventListener('click', () => navigate(el.dataset.path.replace(/\?.*/, '')));
     el.addEventListener('keydown', (e) => {
@@ -77,6 +80,31 @@ export function renderSidebar() {
     });
   });
   sidebarEl.querySelector('.brand').addEventListener('click', () => navigate('/projects'));
+}
+
+// -- Theme --
+const THEME_KEY = 'continuum.theme';
+export function currentTheme() {
+  const attr = document.documentElement.getAttribute('data-theme');
+  if (attr === 'dark' || attr === 'light') return attr;
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'dark' || saved === 'light') return saved;
+  } catch (_e) {}
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+export function applyStoredTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'dark' || saved === 'light') {
+      document.documentElement.setAttribute('data-theme', saved);
+    }
+  } catch (_e) {}
+}
+export function toggleTheme() {
+  const next = currentTheme() === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem(THEME_KEY, next); } catch (_e) {}
 }
 
 function getActiveNav() {

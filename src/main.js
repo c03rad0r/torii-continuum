@@ -3,7 +3,7 @@
  * Boots store → mounts shell → registers routes → starts router → mounts chat.
  */
 import { initStore } from './data/store.js';
-import { mountShell, mainContent, renderSidebar } from './shell.js';
+import { mountShell, mainContent, renderSidebar, applyStoredTheme } from './shell.js';
 import { route, startRouter } from './router.js';
 import { mountChat } from './chat.js';
 
@@ -17,6 +17,7 @@ function boot() {
   const root = document.getElementById('app');
   if (!root) return;
 
+  applyStoredTheme();
   initStore();
   mountShell(root);
 
