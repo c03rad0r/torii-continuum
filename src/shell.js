@@ -1,0 +1,110 @@
+/**
+ * App shell: sidebar + main pane + docked chat container.
+ * Views mount into #main-content.
+ */
+
+import { navigate, currentRoute } from './router.js';
+import { listProjects } from './data/store.js';
+
+const NAV_ITEMS = [
+  { id: 'projects',    label: 'Projects',    icon: iconProjects,    path: '/projects' },
+  { id: 'marketplace', label: 'Marketplace', icon: iconMarket,      path: '/marketplace' },
+  { id: 'routstr',     label: 'Routstr',     icon: iconRoutstr,     path: '/routstr' },
+  { id: 'dashboard',   label: 'Dashboard',   icon: iconDashboard,   path: '/dashboard' },
+];
+
+let mainEl, sidebarEl;
+
+export function mountShell(root) {
+  root.innerHTML = ''; // reset
+  sidebarEl = document.createElement('nav');
+  sidebarEl.className = 'sidebar';
+  sidebarEl.setAttribute('aria-label', 'Continuum navigation');
+  root.appendChild(sidebarEl);
+
+  mainEl = document.createElement('main');
+  mainEl.className = 'main';
+  mainEl.setAttribute('id', 'main-content');
+  root.appendChild(mainEl);
+
+  renderSidebar();
+  window.addEventListener('hashchange', renderSidebar);
+}
+
+export function mainContent() { return mainEl; }
+
+export function renderSidebar() {
+  const projectCount = listProjects().length;
+  const active = getActiveNav();
+
+  sidebarEl.innerHTML = `
+    <div class="brand" role="button" aria-label="Continuum home">
+      <div class="brand-mark">⛩</div>
+      <div>
+        <div class="brand-name">Continuum</div>
+        <div class="brand-sub">project engine</div>
+      </div>
+    </div>
+
+    <div class="nav-section">Workspace</div>
+    ${NAV_ITEMS.map((n) => `
+      <div class="nav-item ${active === n.id ? 'active' : ''}" data-path="${n.path}" role="button" tabindex="0">
+        <span class="nav-icon">${n.icon()}</span>
+        <span>${n.label}</span>
+        ${n.id === 'projects' ? `<span class="nav-badge">${projectCount}</span>` : ''}
+      </div>
+    `).join('')}
+
+    <div class="nav-section">Signals</div>
+    <div class="nav-item" data-path="/marketplace?ours=1" role="button" tabindex="0">
+      <span class="nav-icon">${iconStar()}</span>
+      <span>Our tasks</span>
+    </div>
+    <div class="nav-item" data-path="/routstr" role="button" tabindex="0">
+      <span class="nav-icon">${iconPulse()}</span>
+      <span>Usage</span>
+    </div>
+
+    <div class="sidebar-footer">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span>local · nostr-shaped</span>
+    </div>
+  `;
+  sidebarEl.querySelectorAll('.nav-item').forEach((el) => {
+    el.addEventListener('click', () => navigate(el.dataset.path.replace(/\?.*/, '')));
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
+    });
+  });
+  sidebarEl.querySelector('.brand').addEventListener('click', () => navigate('/projects'));
+}
+
+function getActiveNav() {
+  const cr = currentRoute();
+  if (!cr) return 'projects';
+  if (cr.pattern.startsWith('/projects')) return 'projects';
+  if (cr.pattern.startsWith('/marketplace')) return 'marketplace';
+  if (cr.pattern.startsWith('/routstr')) return 'routstr';
+  if (cr.pattern.startsWith('/dashboard')) return 'dashboard';
+  return 'projects';
+}
+
+// -- Icons (inline SVG, currentColor) --
+function iconProjects() {
+  return `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3" width="6" height="4" rx="1"/><rect x="1.5" y="9" width="6" height="4" rx="1"/><rect x="8.5" y="3" width="6" height="10" rx="1"/></svg>`;
+}
+function iconMarket() {
+  return `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h12l-1 3H3z"/><path d="M3 7v6h10V7"/><path d="M6 13v-3h4v3"/></svg>`;
+}
+function iconRoutstr() {
+  return `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.5"/><path d="M2.5 8h11M8 2.5c1.8 2 1.8 9 0 11M8 2.5c-1.8 2-1.8 9 0 11"/></svg>`;
+}
+function iconDashboard() {
+  return `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="1.5" width="13" height="13" rx="2"/><path d="M1.5 6h13M6 6v8.5"/></svg>`;
+}
+function iconStar() {
+  return `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M8 2l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.8 4.2 13.8l.7-4.3-3.1-3 4.3-.6z"/></svg>`;
+}
+function iconPulse() {
+  return `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8H4l1.5-4 3 8L10 8h4.5"/></svg>`;
+}
