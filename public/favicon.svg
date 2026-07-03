@@ -1,10 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Continuum torii">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#36e0c8"/>
-      <stop offset="1" stop-color="#7c5cff"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#211814"/>
+      <stop offset="1" stop-color="#14100d"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbbf3a"/>
+      <stop offset="1" stop-color="#e0871a"/>
     </linearGradient>
   </defs>
-  <rect x="1" y="1" width="30" height="30" rx="7" fill="#0b0f14" stroke="url(#g)" stroke-width="1.5"/>
-  <path d="M6 12 L26 12 M8 12 L8 24 M24 12 L24 24 M4 12 L28 12" stroke="url(#g)" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+  <!-- rounded bronze tile -->
+  <rect x="0" y="0" width="64" height="64" rx="14" ry="14" fill="url(#bg)"/>
+  <!-- torii gate, centered, amber -->
+  <g fill="url(#amber)">
+    <!-- top curved kasagi (upper lintel, slight upward sweep) -->
+    <path d="M6 15 Q32 8 58 15 L58 21 Q32 15 6 21 Z"/>
+    <!-- shimaki (second lintel) -->
+    <rect x="10" y="23" width="44" height="5" rx="1"/>
+    <!-- nuki (crossbeam) -->
+    <rect x="14" y="32" width="36" height="4" rx="1"/>
+    <!-- left pillar (hashira), slightly tapered inward at top -->
+    <path d="M16 22 L20 22 L22 54 L14 54 Z"/>
+    <!-- right pillar (hashira) -->
+    <path d="M44 22 L48 22 L50 54 L42 54 Z"/>
+    <!-- gakuzuka (small central plaque post) -->
+    <rect x="30" y="28" width="4" height="6"/>
+  </g>
 </svg>
