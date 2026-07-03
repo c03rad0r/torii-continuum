@@ -66,9 +66,10 @@ export function renderSidebar() {
     </div>
 
     <div class="sidebar-footer">
-      <span class="status-dot" aria-hidden="true"></span>
-      <span>Local</span>
-      <button class="theme-toggle" data-theme-toggle title="Toggle theme" aria-label="Toggle theme">${currentTheme() === 'light' ? '☾' : '☼'}</button>
+      <div class="footer-note">
+        <b>Local-first.</b> Continuum stores your projects as nostr-shaped events — portable, signable, yours.
+      </div>
+      <button class="theme-toggle" data-theme-toggle title="Toggle theme" aria-label="Toggle theme">${currentTheme() === 'light' ? iconMoon() : iconSun()}</button>
     </div>
   `;
   const toggle = sidebarEl.querySelector('[data-theme-toggle]');
@@ -135,4 +136,10 @@ function iconStar() {
 }
 function iconPulse() {
   return `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8H4l1.5-4 3 8L10 8h4.5"/></svg>`;
+}
+function iconSun() {
+  return `<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M2.6 2.6l1.05 1.05M12.35 12.35l1.05 1.05M1.5 8h1.5M13 8h1.5M2.6 13.4l1.05-1.05M12.35 3.65l1.05-1.05"/></svg>`;
+}
+function iconMoon() {
+  return `<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 9.5a5 5 0 1 1-6.5-6.5 5 5 0 0 0 6.5 6.5z"/></svg>`;
 }

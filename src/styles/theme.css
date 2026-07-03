@@ -1,138 +1,139 @@
 /* Continuum — theme tokens
- * Original Torii Continuum oversight-dashboard language:
- *   deep blue-black, teal + gold + hot-red, monospace,
- *   gold uppercase headers with red border-left, panel edges, donut rings.
- * Dark (default) and light variants both supported.
+ *
+ * Mirrors the palette + typography of continuum.pplx.app:
+ *   deep warm brown-black background, amber/orange primary (~38° 92%),
+ *   cream foreground, subtle card borders. Cabinet Grotesk display,
+ *   Satoshi body, JetBrains Mono for code.
+ *
+ * Both dark (default) and light variants supplied.
  */
 
 :root,
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  /* Original oversight-dashboard palette (from torii-quest continuumData.js) */
-  --bg:        #070a12;
-  --bg-glow:   #16213a;                /* used in radial-gradient top-right */
-  --panel:     #0d1320;
-  --panel-2:   #111a2b;
-  --edge:      #1d2a44;
-  --edge-hot:  #36e0c8;
+  /* HSL tokens (space-separated so we can vary alpha via hsl(var(--x) / .5)) */
+  --background:            30 12% 8%;
+  --foreground:            40 16% 93%;
+  --card:                  32 10% 12%;
+  --card-foreground:       40 16% 93%;
+  --card-border:           32 10% 20%;
+  --popover:               32 10% 12%;
+  --popover-foreground:    40 16% 93%;
+  --popover-border:        32 10% 20%;
+  --primary:               38 92% 58%;      /* amber */
+  --primary-foreground:    30 30% 10%;
+  --secondary:             32 8% 18%;
+  --secondary-foreground:  40 16% 92%;
+  --muted:                 32 8% 19%;
+  --muted-foreground:      38 8% 62%;
+  --accent:                38 80% 60%;      /* soft orange */
+  --accent-foreground:     30 30% 12%;
+  --destructive:           0 70% 52%;
+  --destructive-foreground: 0 0% 98%;
+  --border:                30 8% 18%;
+  --input:                 32 8% 26%;
+  --ring:                  38 92% 58%;
 
-  --ink:       #dbe4f3;
-  --ink-hi:    #f2f7ff;
-  --muted:     #8b97b0;
-  --dim:       #56637a;
+  --sidebar:               30 12% 10%;
+  --sidebar-foreground:    40 16% 92%;
+  --sidebar-primary:       38 92% 58%;
+  --sidebar-primary-foreground: 30 20% 10%;
+  --sidebar-accent:        32 10% 18%;
+  --sidebar-accent-foreground: 40 16% 92%;
+  --sidebar-border:        30 8% 18%;
+  --sidebar-ring:          38 92% 58%;
 
-  --hot:       #ff5a4d;                /* red — gate marker / hot borders */
-  --accent:    #36e0c8;                /* teal — primary */
-  --accent-hot:#5ff0da;
-  --gold:      #e8b84b;                /* gold — h2 / highlights */
-  --good:      #46d17a;
-  --warn:      #e8b84b;
-  --bad:       #ff5a4d;
+  --good:                  145 55% 55%;
+  --warn:                  38 92% 58%;
 
-  /* Marketplace "ours" accent — keep the gold family */
-  --ours:      #e8b84b;
-  --ours-tint: rgba(232, 184, 75, 0.08);
+  --radius: 0.75rem;
 
-  /* Scanline / grid overlay */
-  --grid-line: rgba(120, 180, 210, 0.05);
+  --font-display: 'Cabinet Grotesk', 'Satoshi', system-ui, sans-serif;
+  --font-sans:    'Satoshi', 'Open Sans', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
 
-  /* Bar gradient — hot → gold → teal (original) */
-  --bar-fill: linear-gradient(90deg, var(--hot), var(--gold) 60%, var(--accent));
-
-  /* Header treatment */
-  --header-bg: linear-gradient(180deg, rgba(54, 224, 200, 0.06), transparent);
-  --page-radial: radial-gradient(1200px 600px at 70% -10%, var(--bg-glow) 0%, var(--bg) 60%);
-
-  /* Radii */
-  --r-sm: 3px;
-  --r:    6px;
-  --r-lg: 10px;
-  --r-pill: 999px;
-
-  /* Type — monospace per original */
-  --font-mono: ui-monospace, Menlo, Consolas, 'JetBrains Mono', monospace;
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-
-  /* Layout */
   --sidebar-w: 232px;
   --chat-h: 88px;
-  --header-h: 60px;
 
-  /* Motion */
   --ease: cubic-bezier(0.4, 0.14, 0.2, 1);
-  --dur: 150ms;
+  --dur:  160ms;
 
-  /* Shadows */
-  --shadow-hot: 0 0 0 1px rgba(54, 224, 200, 0.30), 0 8px 30px rgba(54, 224, 200, 0.08);
+  --shadow-soft: 0 1px 2px hsl(0 0% 0% / .35), 0 4px 20px hsl(0 0% 0% / .25);
+  --glow-amber:  0 0 0 1px hsl(var(--primary) / .35), 0 8px 30px hsl(var(--primary) / .12);
 }
 
-/* Light variant — same design language, inverted surfaces.
- * Warmer paper background, deep navy ink, teal/red/gold hold their meaning.
- */
+/* Light variant — mirrors continuum.pplx.app light mode: warm paper background,
+ * deeper amber, dark warm-brown ink. */
 :root[data-theme='light'] {
   color-scheme: light;
 
-  --bg:        #f4f1ea;                /* warm paper */
-  --bg-glow:   #ffffff;
-  --panel:     #ffffff;
-  --panel-2:   #f7f4ec;
-  --edge:      #d9cfbf;
-  --edge-hot:  #0f8f7c;
+  --background:            40 33% 97%;
+  --foreground:            36 14% 13%;
+  --card:                  0 0% 100%;
+  --card-foreground:       36 14% 13%;
+  --card-border:           40 28% 90%;
+  --popover:               0 0% 100%;
+  --popover-foreground:    36 14% 13%;
+  --popover-border:        40 28% 90%;
+  --primary:               36 92% 46%;
+  --primary-foreground:    36 45% 11%;
+  --secondary:             40 22% 93%;
+  --secondary-foreground:  36 14% 17%;
+  --muted:                 40 22% 94%;
+  --muted-foreground:      38 8% 41%;
+  --accent:                38 84% 53%;
+  --accent-foreground:     36 40% 13%;
+  --destructive:           0 70% 44%;
+  --destructive-foreground: 0 0% 98%;
+  --border:                38 26% 89%;
+  --input:                 40 20% 87%;
+  --ring:                  36 92% 46%;
 
-  --ink:       #131a2b;
-  --ink-hi:    #060a15;
-  --muted:     #5d6a80;
-  --dim:       #8a94a6;
+  --sidebar:               40 30% 95%;
+  --sidebar-foreground:    36 14% 14%;
+  --sidebar-primary:       36 90% 46%;
+  --sidebar-primary-foreground: 30 20% 10%;
+  --sidebar-accent:        40 26% 91%;
+  --sidebar-accent-foreground: 36 14% 16%;
+  --sidebar-border:        38 24% 90%;
+  --sidebar-ring:          36 90% 46%;
 
-  --hot:       #c8362a;
-  --accent:    #0f8f7c;                /* deeper teal for contrast on paper */
-  --accent-hot:#0aa38d;
-  --gold:      #a37417;
-  --good:      #218a4b;
-  --warn:      #a37417;
-  --bad:       #c8362a;
+  --good:                  145 55% 40%;
+  --warn:                  36 92% 46%;
 
-  --ours:      #a37417;
-  --ours-tint: rgba(163, 116, 23, 0.10);
-
-  --grid-line: rgba(19, 26, 43, 0.045);
-
-  --bar-fill: linear-gradient(90deg, var(--hot), var(--gold) 60%, var(--accent));
-
-  --header-bg: linear-gradient(180deg, rgba(15, 143, 124, 0.07), transparent);
-  --page-radial: radial-gradient(1200px 600px at 70% -10%, #eae3d4 0%, var(--bg) 60%);
-
-  --shadow-hot: 0 0 0 1px rgba(15, 143, 124, 0.30), 0 8px 30px rgba(15, 143, 124, 0.10);
+  --shadow-soft: 0 1px 2px hsl(36 14% 13% / .06), 0 4px 20px hsl(36 14% 13% / .08);
+  --glow-amber:  0 0 0 1px hsl(var(--primary) / .35), 0 8px 30px hsl(var(--primary) / .12);
 }
 
-/* Respect OS preference when user hasn't picked one explicitly */
+/* Respect OS on first load when the user hasn't picked one */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
     color-scheme: light;
-    --bg:        #f4f1ea;
-    --bg-glow:   #ffffff;
-    --panel:     #ffffff;
-    --panel-2:   #f7f4ec;
-    --edge:      #d9cfbf;
-    --edge-hot:  #0f8f7c;
-    --ink:       #131a2b;
-    --ink-hi:    #060a15;
-    --muted:     #5d6a80;
-    --dim:       #8a94a6;
-    --hot:       #c8362a;
-    --accent:    #0f8f7c;
-    --accent-hot:#0aa38d;
-    --gold:      #a37417;
-    --good:      #218a4b;
-    --warn:      #a37417;
-    --bad:       #c8362a;
-    --ours:      #a37417;
-    --ours-tint: rgba(163, 116, 23, 0.10);
-    --grid-line: rgba(19, 26, 43, 0.045);
-    --header-bg: linear-gradient(180deg, rgba(15, 143, 124, 0.07), transparent);
-    --page-radial: radial-gradient(1200px 600px at 70% -10%, #eae3d4 0%, var(--bg) 60%);
-    --shadow-hot: 0 0 0 1px rgba(15, 143, 124, 0.30), 0 8px 30px rgba(15, 143, 124, 0.10);
+    --background:            40 33% 97%;
+    --foreground:            36 14% 13%;
+    --card:                  0 0% 100%;
+    --card-foreground:       36 14% 13%;
+    --card-border:           40 28% 90%;
+    --popover:               0 0% 100%;
+    --popover-foreground:    36 14% 13%;
+    --popover-border:        40 28% 90%;
+    --primary:               36 92% 46%;
+    --primary-foreground:    36 45% 11%;
+    --secondary:             40 22% 93%;
+    --muted:                 40 22% 94%;
+    --muted-foreground:      38 8% 41%;
+    --accent:                38 84% 53%;
+    --border:                38 26% 89%;
+    --input:                 40 20% 87%;
+    --ring:                  36 92% 46%;
+    --sidebar:               40 30% 95%;
+    --sidebar-foreground:    36 14% 14%;
+    --sidebar-primary:       36 90% 46%;
+    --sidebar-accent:        40 26% 91%;
+    --sidebar-border:        38 24% 90%;
+    --good:                  145 55% 40%;
+    --shadow-soft: 0 1px 2px hsl(36 14% 13% / .06), 0 4px 20px hsl(36 14% 13% / .08);
   }
 }
 
@@ -142,9 +143,9 @@ html, body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  background: var(--page-radial);
-  color: var(--ink);
-  font-family: var(--font-mono);
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
@@ -152,133 +153,151 @@ html, body {
   transition: background 200ms var(--ease), color 200ms var(--ease);
 }
 
+/* Very soft top-right amber wash — the signature glow on the live site */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background-image:
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 48px 48px;
+  background:
+    radial-gradient(1000px 500px at 85% -10%, hsl(var(--primary) / .10), transparent 55%),
+    radial-gradient(800px 400px at 15% 110%, hsl(var(--primary) / .06), transparent 55%);
   z-index: 0;
-  opacity: 0.8;
 }
 
-a { color: var(--accent); text-decoration: none; }
-a:hover { color: var(--accent-hot); }
+a { color: hsl(var(--primary)); text-decoration: none; }
+a:hover { color: hsl(var(--primary) / .85); }
+
+h1, h2, h3, h4, .display {
+  font-family: var(--font-display);
+  color: hsl(var(--foreground));
+  letter-spacing: -0.01em;
+  font-weight: 500;
+}
 
 button {
   font: inherit;
+  font-family: var(--font-sans);
   color: inherit;
   background: transparent;
-  border: 1px solid var(--edge);
-  border-radius: var(--r);
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 0.25rem);
   padding: 8px 14px;
   cursor: pointer;
-  letter-spacing: 0.5px;
   transition: border-color var(--dur) var(--ease),
               background var(--dur) var(--ease),
               color var(--dur) var(--ease),
               transform var(--dur) var(--ease);
 }
-button:hover { border-color: var(--accent); color: var(--ink-hi); }
+button:hover { border-color: hsl(var(--primary) / .55); color: hsl(var(--foreground)); }
 button:active { transform: translateY(1px); }
 
 button.primary {
-  background: linear-gradient(180deg, rgba(54, 224, 200, 0.15), rgba(54, 224, 200, 0.05));
-  border-color: var(--accent);
-  color: var(--accent);
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  font-size: 12px;
+  background: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-weight: 600;
 }
-:root[data-theme='light'] button.primary {
-  background: linear-gradient(180deg, rgba(15, 143, 124, 0.12), rgba(15, 143, 124, 0.04));
-  color: var(--accent);
+button.primary:hover {
+  background: hsl(var(--primary) / .9);
+  border-color: hsl(var(--primary) / .9);
+  color: hsl(var(--primary-foreground));
 }
-button.primary:hover { box-shadow: var(--shadow-hot); }
 
-button.ghost { border-color: transparent; color: var(--muted); }
-button.ghost:hover { color: var(--ink-hi); border-color: var(--edge); }
+button.ghost { border-color: transparent; color: hsl(var(--muted-foreground)); }
+button.ghost:hover { color: hsl(var(--foreground)); border-color: hsl(var(--border)); }
 
 input, textarea, select {
   font: inherit;
-  color: var(--ink-hi);
-  background: var(--panel);
-  border: 1px solid var(--edge);
-  border-radius: var(--r);
+  font-family: var(--font-sans);
+  color: hsl(var(--foreground));
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--input));
+  border-radius: calc(var(--radius) - 0.25rem);
   padding: 8px 12px;
   outline: none;
-  transition: border-color var(--dur) var(--ease);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+input:focus, textarea:focus, select:focus {
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 3px hsl(var(--ring) / .18);
+}
+::placeholder { color: hsl(var(--muted-foreground)); }
 
-/* Pill vocabulary — mirrors original .pill classes */
+/* Pills — small status chips like the live site's "Ready" / "Manual" */
 .pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 1px 8px;
-  border-radius: var(--r-pill);
+  padding: 2px 10px;
+  border-radius: 999px;
   font-size: 11px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  border: 1px solid var(--edge);
-  color: var(--muted);
-  background: transparent;
+  font-weight: 500;
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--card));
+  font-family: var(--font-sans);
 }
-.pill.ok,    .pill.good        { color: var(--good); border-color: var(--good); }
-.pill.hot,   .pill.active      { color: var(--accent); border-color: var(--accent); }
-.pill.warn,  .pill.manual      { color: var(--warn); border-color: var(--warn); }
-.pill.danger,.pill.bad         { color: var(--bad); border-color: var(--bad); }
-.pill.ours                     { color: var(--ours); border-color: var(--ours); background: var(--ours-tint); }
+.pill::before {
+  content: '';
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor;
+  opacity: 0.9;
+}
+.pill.ok, .pill.good, .pill.ready   { color: hsl(var(--good)); border-color: hsl(var(--good) / .35); background: hsl(var(--good) / .08); }
+.pill.hot, .pill.active             { color: hsl(var(--primary)); border-color: hsl(var(--primary) / .45); background: hsl(var(--primary) / .10); }
+.pill.warn, .pill.manual            { color: hsl(var(--primary)); border-color: hsl(var(--primary) / .35); background: hsl(var(--primary) / .08); }
+.pill.danger, .pill.bad             { color: hsl(var(--destructive)); border-color: hsl(var(--destructive) / .40); background: hsl(var(--destructive) / .08); }
+.pill.ours                          { color: hsl(var(--primary)); border-color: hsl(var(--primary) / .45); background: hsl(var(--primary) / .10); }
 
 .mono   { font-family: var(--font-mono); font-size: 12px; }
 .sans   { font-family: var(--font-sans); }
-.muted  { color: var(--muted); }
-.dim    { color: var(--dim); }
+.muted  { color: hsl(var(--muted-foreground)); }
+.dim    { color: hsl(var(--muted-foreground) / .7); }
 
+/* Cards — the signature soft rounded card of the live site */
 .card {
-  background: var(--panel);
-  border: 1px solid var(--edge);
-  border-radius: var(--r);
-  padding: 14px 16px;
-  position: relative;
-  transition: border-color var(--dur) var(--ease);
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--card-border));
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  color: hsl(var(--card-foreground));
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  box-shadow: var(--shadow-soft);
 }
-.card:hover { border-color: var(--accent); }
-.card.hot { border-color: var(--accent); box-shadow: var(--shadow-hot); }
+.card:hover { border-color: hsl(var(--primary) / .35); }
+.card.hot { border-color: hsl(var(--primary) / .55); box-shadow: var(--glow-amber); }
 .card h3 {
-  margin: 0 0 6px 0;
-  color: var(--ink-hi);
-  font-weight: 600;
-  font-size: 14px;
-  letter-spacing: 0.5px;
+  margin: 0 0 8px 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: hsl(var(--foreground));
 }
-.card p { margin: 0 0 8px 0; color: var(--muted); }
+.card p { margin: 0 0 10px 0; color: hsl(var(--muted-foreground)); }
 
 .hr {
   height: 1px;
-  background: var(--edge);
+  background: hsl(var(--border));
   border: 0;
-  margin: 12px 0;
+  margin: 14px 0;
 }
 
-/* Small section labels — gold uppercase with red border-left */
-.section-title {
-  font-size: 12px;
-  letter-spacing: 3px;
-  color: var(--gold);
+/* Small amber eyebrow labels (e.g. "PROJECT OVERSIGHT") */
+.section-title,
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: hsl(var(--primary));
   text-transform: uppercase;
-  border-left: 3px solid var(--hot);
-  padding-left: 10px;
   margin: 0;
   font-weight: 600;
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: var(--edge); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary) / .5); }
 ::-webkit-scrollbar-track { background: transparent; }
