@@ -54,7 +54,7 @@ export function renderLanding(mount) {
       h('div', { class: 'landing-torii-post right' }),
     ]),
     h('div', { class: 'landing-copy' }, [
-      h('div', { class: 'landing-eyebrow', text: 'Torii Continuum · v0.2.0-alpha' }),
+      h('div', { class: 'landing-eyebrow', text: 'Torii Continuum · v0.2.1-alpha' }),
       h('h1', { class: 'landing-title', text: 'A sovereign app builder, project engine and marketplace for bot work.' }),
       h('p', { class: 'landing-lede' }, [
         'Continuum is your gateway into Torii — a home for projects that live as nostr events, pay in Cashu, and answer to no platform. Assistant included. Custody not.',

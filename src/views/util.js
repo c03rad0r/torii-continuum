@@ -5,7 +5,11 @@ export function h(tag, attrs = {}, children = []) {
   for (const [k, v] of Object.entries(attrs || {})) {
     if (v === false || v == null) continue;
     if (k === 'class') el.className = v;
-    else if (k === 'html') el.innerHTML = v;
+    // NOTE: We intentionally do NOT support an `html:` attribute. Every text
+    // value should flow through `text:` (safe .textContent) or through nested
+    // h() calls. If you need raw markup for a specific element (e.g. an inline
+    // SVG icon), build it as its own element and append it — don't take a
+    // string here. This closes the XSS door for good.
     else if (k === 'text') el.textContent = v;
     else if (k.startsWith('on') && typeof v === 'function') {
       el.addEventListener(k.slice(2).toLowerCase(), v);

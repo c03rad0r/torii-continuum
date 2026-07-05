@@ -106,15 +106,18 @@ export function currentTheme() {
     const saved = localStorage.getItem(THEME_KEY);
     if (saved === 'dark' || saved === 'light') return saved;
   } catch (_e) {}
-  return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  // Dark is Continuum's canonical look. If the user has never chosen, we
+  // default to dark rather than tracking the OS preference — the amber-on-
+  // bronze palette was designed dark-first.
+  return 'dark';
 }
 export function applyStoredTheme() {
+  let theme = 'dark'; // canonical default
   try {
     const saved = localStorage.getItem(THEME_KEY);
-    if (saved === 'dark' || saved === 'light') {
-      document.documentElement.setAttribute('data-theme', saved);
-    }
+    if (saved === 'dark' || saved === 'light') theme = saved;
   } catch (_e) {}
+  document.documentElement.setAttribute('data-theme', theme);
 }
 export function toggleTheme() {
   const next = currentTheme() === 'light' ? 'dark' : 'light';
