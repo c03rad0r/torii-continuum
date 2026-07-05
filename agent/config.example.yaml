@@ -1,0 +1,157 @@
+# Torii Continuum — Agent Configuration (example)
+#
+# Copy this file to `config.yaml` on the VPS, fill in the values, and never
+# commit the real one. `config.yaml` is in .gitignore.
+#
+# Filesystem posture: this file lives under /home/continuum/agent/ (chmod 700).
+# The `continuum` OS user runs the daemon. No other user can read it.
+
+# ─────────────────────────────────────────────────────────────
+# Admin identity
+# ─────────────────────────────────────────────────────────────
+#
+# The npub allowed to log in. NIP-07 signature challenge is verified against
+# this key. Nothing else is trusted — no password, no cookie, no OAuth.
+#
+# Only one admin in v1. Multi-admin is not on the roadmap.
+#
+admin_npub: "npub1REPLACE_WITH_YOUR_PLEBEIAN_SIGNER_NPUB"
+
+# Session tokens are HMAC-signed with this secret. Generate with:
+#   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# Rotate any time; existing sessions become invalid.
+session_secret: "REPLACE_WITH_32_BYTES_HEX"
+
+# How long a session token stays valid (seconds). 24h default.
+session_ttl_sec: 86400
+
+
+# ─────────────────────────────────────────────────────────────
+# HTTP server
+# ─────────────────────────────────────────────────────────────
+server:
+  # Bind to localhost only. nginx does TLS termination in front.
+  host: "127.0.0.1"
+  port: 8787
+
+  # CORS allowlist. Continuum Console lives here in prod.
+  cors_origins:
+    - "https://continuum-torii.pplx.app"
+    - "http://localhost:5180"       # `npm run dev`
+    - "http://127.0.0.1:5180"
+
+
+# ─────────────────────────────────────────────────────────────
+# Cashu wallet (on-VPS, pay-per-request float)
+# ─────────────────────────────────────────────────────────────
+#
+# The agent holds a small Cashu balance to pay Routstr providers. Top up from
+# Plebeian Signer's built-in wallet via POST /api/wallet/receive (admin only).
+#
+# Wallet data is stored under memory/wallet/ (chmod 700). Not committed. Not
+# logged. If this file is destroyed the wallet is gone — treat it like cash.
+#
+cashu:
+  # Mint(s) to use. First one is default for new mints; others accepted on receive.
+  # Change these to Bitcoin-only, Chiefmonkey-trusted mints in production.
+  mints:
+    - "https://mint.minibits.cash/Bitcoin"
+    - "https://mint.coinos.io"
+
+  # Warn admin when balance drops below this many sats.
+  low_balance_warn_sats: 500
+
+  # Refuse to route new requests when balance drops below this. Protects against
+  # runaway calls draining the float during a bug.
+  hard_floor_sats: 100
+
+
+# ─────────────────────────────────────────────────────────────
+# Routstr (model layer)
+# ─────────────────────────────────────────────────────────────
+#
+# Routstr is the OpenAI-compatible pay-per-request endpoint on Nostr. Each
+# request is paid in Cashu tokens from the wallet above. No API key, no
+# monthly bill, no custody.
+#
+# Provider set is pinned in config so a hostile relay can't route us to a bad
+# provider. Fallback ladder is present but off by default — set `fallback: true`
+# to allow automatic downgrade to the next entry when the primary fails.
+#
+routstr:
+  # Discovery endpoint (OpenAI-compatible base URL for the primary).
+  endpoint: "https://api.routstr.com"
+
+  # Per-skill model pins. Skill name → model id (Routstr provider decides which
+  # underlying provider serves it). "auto" defers to Routstr default routing.
+  models:
+    chat:      "deepseek-chat-v3"
+    coding:    "deepseek-coder-v2"
+    summarise: "llama-3.1-8b-instruct"
+    routing:   "llama-3.1-8b-instruct"        # tiny "which skill?" classifier
+    embed:     "auto"                         # v2 — not used in v1
+
+  # Fallback ladder per skill. Ordered from strongest to cheapest. Off by
+  # default (fallback: false); flip to true once we've validated the ladder
+  # doesn't silently degrade quality.
+  fallback:
+    enabled: false
+    coding:
+      - "deepseek-coder-v2"
+      - "qwen-2.5-coder-32b"
+      - "qwen-2.5-coder-7b"
+    chat:
+      - "deepseek-chat-v3"
+      - "llama-3.1-70b-instruct"
+      - "llama-3.1-8b-instruct"
+
+  # Hard limits per request. Protects the float from prompt-injection cost bombs.
+  limits:
+    max_tokens_out: 2048
+    max_sats_per_request: 50
+
+
+# ─────────────────────────────────────────────────────────────
+# Skills (v1)
+# ─────────────────────────────────────────────────────────────
+#
+# Only these four exist in v1. Adding a skill is a code change + a config
+# entry, not a config-only toggle. This is intentional — surface area is
+# small on purpose.
+#
+skills:
+  chat:
+    enabled: true
+    # Which memory paths the chat skill can read grounding from.
+    read_paths:
+      - "memory/notes/"
+      - "memory/sessions/"
+
+  brain_read:
+    enabled: false   # v1: not yet — needs the Brain path baked into the agent
+  brain_write:
+    enabled: false   # v1: not yet
+  todo_patch:
+    enabled: false   # v1: not yet — needs mdPatch bridge to the Quest repo
+  nostr_draft:
+    enabled: false   # v1: not yet — first live skill after chat proves the loop
+
+
+# ─────────────────────────────────────────────────────────────
+# Logging & cost accounting
+# ─────────────────────────────────────────────────────────────
+#
+# NEVER log prompt bodies. NEVER log Cashu tokens. NEVER log session secrets.
+# The cost log is a JSONL of accounting metadata only.
+#
+logging:
+  # Where server logs go. `stdout` = systemd journal.
+  destination: "stdout"
+  level: "info"      # trace, debug, info, warn, error
+
+  # Cost log path (per request). One line per completed Routstr call.
+  cost_log: "memory/costs.jsonl"
+
+  # Session log (auth events only — challenge issued, verify pass/fail, token exchange).
+  # No PII, no message bodies.
+  audit_log: "memory/audit.jsonl"

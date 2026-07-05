@@ -27,7 +27,7 @@ function toRegex(pattern) {
 }
 
 function resolve() {
-  const hash = window.location.hash || '#/projects';
+  const hash = window.location.hash || '#/';
   const path = hash.slice(1);
   for (const r of routes) {
     const m = path.match(toRegex(r.pattern));
@@ -39,8 +39,8 @@ function resolve() {
       return;
     }
   }
-  // Fallback
-  window.location.hash = '#/projects';
+  // Fallback to landing
+  window.location.hash = '#/';
 }
 
 export function currentRoute() { return currentHandler; }

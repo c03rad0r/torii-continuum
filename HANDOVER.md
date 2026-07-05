@@ -18,10 +18,9 @@ Paste this whole block at the start of a new Perplexity Computer session to resu
 
 ## Stack
 
-- Vite (dev + build), Vitest (tests) — zero runtime deps, only devDeps.
-- Vanilla JS single-page app with hash router — no framework.
-- Static-only bundle; no backend, no auth, no database. All data mock/local.
-- LocalStorage for theme preference and mock nostr-shaped events.
+- **Frontend:** Vite (dev + build), Vitest (tests). Vanilla JS SPA + hash router. Static bundle. LocalStorage for theme + nostr-shaped events + session token.
+- **Agent (`agent/`, v0.2.0-alpha+):** Node 20 + Fastify (`fastify@^4.28.1`), `nostr-tools@^2.7.2` for NIP-07 verify, `@cashu/cashu-ts@^2.1.0` for the Cashu wallet, `yaml@^2.5.1` for config. Runs as a systemd service on the operator's VPS. Frontend points at it via `VITE_AGENT_URL` (build-time) or `window.__CONTINUUM_AGENT_URL__` (runtime). Demo build on pplx.app intentionally omits this so it stays offline/mock.
+- Auth: NIP-07 challenge (kind 22242) verified server-side, session token is `iat.exp.pk.hmacSig` HMAC-SHA256, 24h TTL.
 
 ## Design system (matches https://continuum.pplx.app aesthetic)
 

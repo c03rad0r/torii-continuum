@@ -1,10 +1,18 @@
 /**
- * AI chat dock — UI shell with mock responses.
- * Context is set by each view via setChatContext() so the
- * bot's mock reply can reference the current project/page.
+ * AI chat dock.
  *
- * When we wire real Routstr later, only sendToBackend() changes.
+ * Wiring:
+ *   • If VITE_AGENT_URL is set and the user is logged in, chat goes through
+ *     the agent (POST /api/chat), which pays per request in Cashu via Routstr.
+ *   • Otherwise, we serve the canned mock reply so the demo build on
+ *     continuum-torii.pplx.app still feels alive without a live backend.
+ *
+ * Each view sets context via setChatContext() so replies can reference
+ * the current project/page.
  */
+
+import { chat as agentChat } from './data/agent.js';
+import { isSessionLive } from './auth.js';
 
 let logEl, inputEl, sendBtn, contextEl, toggleEl, dockEl;
 let messages = [];
@@ -49,7 +57,10 @@ function autosize() {
 }
 
 function greet() {
-  push('ai', 'Continuum online. Pick a project on the left, or ask me to spin up a new one. This chat is a mock shell for now — no live model calls.');
+  const live = isSessionLive();
+  push('ai', live
+    ? 'Continuum online. Signed in. I can help plan projects, draft milestones, and reason across your Brain. Model calls are paid per request via Routstr + Cashu.'
+    : 'Continuum online. Running in demo mode (mock replies). Sign in with Plebeian Signer to route real calls through your agent.');
 }
 
 export function setChatContext(next) {
@@ -107,14 +118,30 @@ async function send() {
 
   thinking = true;
   renderLog();
-  const reply = await mockReply(text, context);
+  const reply = await getReply(text, context);
   thinking = false;
   push('ai', reply);
 }
 
 /**
+ * Route the user turn either to the live agent (POST /api/chat) or to the
+ * local mock reply. The agent is used only when we have a session token —
+ * agent.js drops the request if the token is missing or expired.
+ */
+async function getReply(text, ctx) {
+  if (isSessionLive()) {
+    const r = await agentChat({ message: text, context: ctx });
+    if (r.ok && r.data?.reply) return r.data.reply;
+    // Fall through to mock on any failure, with a hint prefix so the user knows
+    if (r.reason && !r.offline) return `(agent error: ${r.reason})\n\n` + await mockReply(text, ctx);
+    return `(agent unreachable — served mock)\n\n` + await mockReply(text, ctx);
+  }
+  return mockReply(text, ctx);
+}
+
+/**
  * Mock reply — pretends to be a routed DeepSeek call.
- * Replace with sendToBackend() when Routstr wiring lands.
+ * Used when there is no active session or the agent is unreachable.
  */
 function mockReply(text, ctx) {
   const q = text.toLowerCase();

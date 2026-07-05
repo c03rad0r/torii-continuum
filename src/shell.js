@@ -5,6 +5,8 @@
 
 import { navigate, currentRoute } from './router.js';
 import { listProjects } from './data/store.js';
+import { isSessionLive, startLogin, endSession } from './auth.js';
+import { isAgentConfigured } from './data/agent.js';
 
 const NAV_ITEMS = [
   { id: 'projects',    label: 'Projects',    icon: iconProjects,    path: '/projects' },
@@ -69,18 +71,30 @@ export function renderSidebar() {
       <div class="footer-note">
         <b>Local-first.</b> Continuum stores your projects as nostr-shaped events — portable, signable, yours.
       </div>
-      <button class="theme-toggle" data-theme-toggle title="Toggle theme" aria-label="Toggle theme">${currentTheme() === 'light' ? iconMoon() : iconSun()}</button>
+      <div class="sidebar-footer-row">
+        <button class="session-btn ${isSessionLive() ? 'logged-in' : ''}" data-session-toggle title="${isSessionLive() ? 'Sign out' : 'Sign in with Nostr'}">
+          <span class="session-icon">${isSessionLive() ? iconLogout() : iconKey()}</span>
+          <span>${isSessionLive() ? 'Sign out' : (isAgentConfigured() ? 'Login' : 'Demo mode')}</span>
+        </button>
+        <button class="theme-toggle" data-theme-toggle title="Toggle theme" aria-label="Toggle theme">${currentTheme() === 'light' ? iconMoon() : iconSun()}</button>
+      </div>
     </div>
   `;
   const toggle = sidebarEl.querySelector('[data-theme-toggle]');
   if (toggle) toggle.addEventListener('click', (e) => { e.stopPropagation(); toggleTheme(); renderSidebar(); });
+  const sessionBtn = sidebarEl.querySelector('[data-session-toggle]');
+  if (sessionBtn) sessionBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (isSessionLive()) { endSession(); renderSidebar(); }
+    else { startLogin(); }
+  });
   sidebarEl.querySelectorAll('.nav-item').forEach((el) => {
     el.addEventListener('click', () => navigate(el.dataset.path.replace(/\?.*/, '')));
     el.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
     });
   });
-  sidebarEl.querySelector('.brand').addEventListener('click', () => navigate('/projects'));
+  sidebarEl.querySelector('.brand').addEventListener('click', () => navigate('/'));
 }
 
 // -- Theme --
@@ -142,4 +156,10 @@ function iconSun() {
 }
 function iconMoon() {
   return `<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 9.5a5 5 0 1 1-6.5-6.5 5 5 0 0 0 6.5 6.5z"/></svg>`;
+}
+function iconKey() {
+  return `<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="11" r="2.5"/><path d="M7 9l7-7M11 2h3v3M11 5l2 2"/></svg>`;
+}
+function iconLogout() {
+  return `<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2H3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/><path d="M10 5l3 3-3 3M13 8H6"/></svg>`;
 }

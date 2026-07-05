@@ -1,0 +1,20 @@
+# Real config with admin npub + session secret — NEVER commit.
+config.yaml
+
+# Node
+node_modules/
+npm-debug.log*
+.env
+.env.*
+
+# Runtime state — the wallet, sessions, cost logs, and drafts all live here.
+# Treat like cash. Not committed. Not synced. Backed up out-of-band if at all.
+memory/wallet/
+memory/costs.jsonl
+memory/audit.jsonl
+memory/sessions/
+pending/*.json
+!pending/.gitkeep
+
+# Systemd override if generated locally
+*.service.local

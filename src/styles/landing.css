@@ -1,0 +1,360 @@
+/* Continuum — landing page (#/ marketing surface)
+ *
+ * Design brief (from the operator): funky, not in-your-face, inspiring.
+ * Amber on warm bronze, sovereignty-first, quietly confident.
+ *
+ * When #app has .landing-mode, we hide the sidebar + chat dock and expand
+ * the main column to full-bleed. The landing view itself controls its
+ * internal max-width and padding.
+ */
+
+/* ── Landing-mode shell adjustments ─────────────────────────── */
+
+#app.landing-mode {
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "main"
+    "main";
+}
+#app.landing-mode .sidebar { display: none; }
+#app.landing-mode .chat-dock { display: none; }
+#app.landing-mode .main {
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* ── Landing container ─────────────────────────────────────── */
+
+.landing-hero,
+.landing-promises,
+.landing-pillars,
+.landing-status,
+.landing-foot {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+/* Ambient background — a soft radial amber glow, tucked behind everything */
+#app.landing-mode .main::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 20% -10%, hsl(38 92% 58% / .08), transparent 55%),
+    radial-gradient(ellipse at 90% 15%, hsl(28 80% 50% / .05), transparent 60%),
+    radial-gradient(ellipse at 40% 110%, hsl(38 60% 40% / .06), transparent 55%);
+}
+#app.landing-mode .main > * { position: relative; z-index: 1; }
+
+/* ── Hero ─────────────────────────────────────────────────── */
+
+.landing-hero {
+  padding-top: 96px;
+  padding-bottom: 72px;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 56px;
+  align-items: center;
+}
+
+@media (max-width: 780px) {
+  .landing-hero {
+    grid-template-columns: 1fr;
+    padding-top: 56px;
+    gap: 32px;
+    text-align: left;
+  }
+}
+
+/* Torii arch — pure CSS/box-model, no assets */
+.landing-torii {
+  position: relative;
+  width: 220px;
+  height: 240px;
+  margin: 0 auto;
+}
+.landing-torii-arch {
+  position: absolute;
+  top: 0; left: 0;
+  width: 220px;
+  height: 22px;
+  background: linear-gradient(90deg, hsl(38 92% 58%), hsl(28 90% 50%));
+  border-radius: 4px 4px 8px 8px;
+  box-shadow: 0 6px 24px hsl(38 92% 58% / .35);
+}
+.landing-torii-arch::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  bottom: -22px;
+  height: 10px;
+  margin: 0 8px;
+  background: hsl(38 88% 52%);
+  border-radius: 2px;
+  box-shadow: 0 4px 18px hsl(38 92% 58% / .25);
+}
+.landing-torii-post {
+  position: absolute;
+  top: 22px;
+  left: 28px;
+  width: 18px;
+  height: 218px;
+  background: linear-gradient(180deg, hsl(38 92% 58%), hsl(24 80% 42%));
+  border-radius: 3px;
+  box-shadow: 0 8px 30px hsl(38 92% 58% / .18);
+}
+.landing-torii-post.right {
+  left: auto;
+  right: 28px;
+}
+
+.landing-copy { max-width: 640px; }
+
+.landing-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: hsl(var(--primary));
+  margin-bottom: 18px;
+  opacity: 0.9;
+}
+
+.landing-title {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 5.2vw, 56px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: hsl(var(--foreground));
+  margin: 0 0 20px 0;
+  font-weight: 700;
+}
+
+.landing-lede {
+  font-size: clamp(15px, 1.4vw, 18px);
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground));
+  max-width: 560px;
+  margin: 0 0 28px 0;
+}
+
+.landing-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.landing-btn {
+  font-size: 15px;
+  padding: 10px 18px;
+  border-radius: 999px;
+}
+.landing-btn.primary {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-color: transparent;
+  box-shadow: 0 6px 20px hsl(38 92% 58% / .25);
+}
+.landing-btn.primary:hover { filter: brightness(1.05); }
+.landing-btn.ghost {
+  background: transparent;
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+}
+.landing-btn.ghost:hover { border-color: hsl(var(--primary) / .55); }
+
+.landing-microcopy {
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── Section eyebrows ─────────────────────────────────────── */
+
+.landing-section-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: hsl(var(--primary));
+  opacity: 0.85;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.landing-section-eyebrow::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, hsl(var(--primary) / .35), transparent);
+}
+
+/* ── Promises grid ────────────────────────────────────────── */
+
+.landing-promises { padding-top: 40px; padding-bottom: 40px; }
+.landing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+.landing-promise {
+  padding: 22px 20px;
+  transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.landing-promise:hover {
+  border-color: hsl(var(--primary) / .35);
+  transform: translateY(-2px);
+}
+.landing-promise-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  margin: 0 0 8px 0;
+  color: hsl(var(--foreground));
+}
+.landing-promise p { margin: 0; font-size: 13.5px; line-height: 1.55; }
+
+/* ── Pillars ──────────────────────────────────────────────── */
+
+.landing-pillars { padding-top: 40px; padding-bottom: 40px; }
+.landing-pillar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+.landing-pillar {
+  background: hsl(var(--card) / .5);
+  border: 1px solid hsl(var(--card-border));
+  border-radius: var(--radius);
+  padding: 18px 18px;
+  position: relative;
+  overflow: hidden;
+}
+.landing-pillar::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, hsl(var(--primary)), transparent);
+  opacity: 0.7;
+}
+.landing-pillar-k {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 6px;
+}
+.landing-pillar-v {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: hsl(var(--foreground));
+  margin-bottom: 4px;
+}
+.landing-pillar-note {
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+/* ── Status list ──────────────────────────────────────────── */
+
+.landing-status { padding-top: 40px; padding-bottom: 48px; }
+.landing-status-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px 24px;
+}
+.landing-status-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  color: hsl(var(--muted-foreground));
+  padding: 8px 0;
+  border-bottom: 1px dashed hsl(var(--border));
+}
+.landing-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px hsl(var(--background));
+}
+.landing-status-item.status-ok    { color: hsl(var(--foreground)); }
+.landing-status-item.status-ok    .landing-status-dot { background: hsl(var(--good)); }
+.landing-status-item.status-next  .landing-status-dot { background: hsl(var(--primary)); }
+.landing-status-item.status-later .landing-status-dot { background: hsl(var(--muted-foreground) / .5); }
+
+/* ── Footer ───────────────────────────────────────────────── */
+
+.landing-foot {
+  padding-top: 32px;
+  padding-bottom: 64px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  border-top: 1px solid hsl(var(--border));
+  margin-top: 24px;
+}
+.landing-foot a {
+  color: hsl(var(--primary));
+  text-decoration: none;
+  border-bottom: 1px dotted hsl(var(--primary) / .5);
+}
+.landing-foot a:hover { border-bottom-color: hsl(var(--primary)); }
+
+/* ── Login modal spinner ──────────────────────────────────── */
+
+.login-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid hsl(var(--border));
+  border-top-color: hsl(var(--primary));
+  border-radius: 50%;
+  animation: continuum-spin 0.8s linear infinite;
+  margin: 0 auto 12px auto;
+}
+@keyframes continuum-spin { to { transform: rotate(360deg); } }
+
+/* ── Sidebar session button ───────────────────────────────── */
+
+/* Stack footer vertically once we introduce the session button row */
+.sidebar-footer {
+  flex-direction: column;
+  align-items: stretch;
+}
+.sidebar-footer .footer-note { flex: 0 1 auto; }
+
+.sidebar-footer-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 10px;
+}
+.session-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12.5px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+.session-btn:hover { border-color: hsl(var(--primary) / .55); color: hsl(var(--primary)); }
+.session-btn.logged-in { border-color: hsl(var(--good) / .35); color: hsl(var(--good)); }
+.session-btn.logged-in:hover { border-color: hsl(var(--destructive) / .55); color: hsl(var(--destructive)); }
+.session-icon { display: inline-flex; align-items: center; }

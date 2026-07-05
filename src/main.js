@@ -1,17 +1,28 @@
 /**
  * Continuum — app entry.
  * Boots store → mounts shell → registers routes → starts router → mounts chat.
+ *
+ * Landing route ('/') renders full-bleed inside main, and toggles a
+ * `landing-mode` class on #app to hide sidebar + chat dock. Every other
+ * route restores the standard shell.
  */
 import { initStore } from './data/store.js';
 import { mountShell, mainContent, renderSidebar, applyStoredTheme } from './shell.js';
-import { route, startRouter } from './router.js';
+import { route, startRouter, currentRoute } from './router.js';
 import { mountChat } from './chat.js';
 
+import { renderLanding } from './views/landing.js';
 import { renderProjects } from './views/projects.js';
 import { renderProjectHome } from './views/projectHome.js';
 import { renderMarketplace } from './views/marketplace.js';
 import { renderRoutstr } from './views/routstr.js';
 import { renderDashboard } from './views/dashboard.js';
+
+function setLandingMode(on) {
+  const app = document.getElementById('app');
+  if (!app) return;
+  app.classList.toggle('landing-mode', !!on);
+}
 
 function boot() {
   const root = document.getElementById('app');
@@ -22,14 +33,23 @@ function boot() {
   mountShell(root);
 
   // Routes
-  route('/projects', () => { renderProjects(mainContent()); renderSidebar(); });
-  route('/projects/:slug', ({ slug }) => { renderProjectHome(mainContent(), slug); renderSidebar(); });
-  route('/marketplace', () => { renderMarketplace(mainContent()); renderSidebar(); });
-  route('/routstr', () => { renderRoutstr(mainContent()); renderSidebar(); });
-  route('/dashboard', () => { renderDashboard(mainContent()); renderSidebar(); });
+  route('/', () => { setLandingMode(true); renderLanding(mainContent()); });
+  route('/projects', () => { setLandingMode(false); renderProjects(mainContent()); renderSidebar(); });
+  route('/projects/:slug', ({ slug }) => { setLandingMode(false); renderProjectHome(mainContent(), slug); renderSidebar(); });
+  route('/marketplace', () => { setLandingMode(false); renderMarketplace(mainContent()); renderSidebar(); });
+  route('/routstr', () => { setLandingMode(false); renderRoutstr(mainContent()); renderSidebar(); });
+  route('/dashboard', () => { setLandingMode(false); renderDashboard(mainContent()); renderSidebar(); });
 
   startRouter();
   mountChat(root);
+
+  // Re-render sidebar when session changes so the login/logout button stays honest
+  document.addEventListener('continuum:session-changed', () => {
+    renderSidebar();
+    // If we're on landing, re-render it so its CTAs reflect the new state
+    const cr = currentRoute();
+    if (cr && cr.pattern === '/') renderLanding(mainContent());
+  });
 
   // Prevent double-tap zoom on the chat button on iOS
   document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
