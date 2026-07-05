@@ -69,46 +69,32 @@
   }
 }
 
-/* Torii arch — pure CSS/box-model, no assets */
+/* Ornate Myōjin-style torii — inline SVG, no external assets. Anatomy
+ * is faithful (kasagi, shimaki, gakuzuka + plaque, nuki, kusabi wedges,
+ * daiwa rings, uchikorobi pillars, nemaki base bands). Palette stays on
+ * the amber ↔ deep-bronze tokens — ornate, not gaudy. */
 .landing-torii {
   position: relative;
-  width: 220px;
-  height: 240px;
+  width: 260px;
+  max-width: 100%;
   margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  filter: drop-shadow(0 20px 40px hsl(38 92% 58% / 0.18));
 }
-.landing-torii-arch {
-  position: absolute;
-  top: 0; left: 0;
-  width: 220px;
-  height: 22px;
-  background: linear-gradient(90deg, hsl(38 92% 58%), hsl(28 90% 50%));
-  border-radius: 4px 4px 8px 8px;
-  box-shadow: 0 6px 24px hsl(38 92% 58% / .35);
+.landing-torii-svg {
+  width: 100%;
+  height: auto;
+  max-width: 260px;
+  display: block;
 }
-.landing-torii-arch::after {
-  content: "";
-  position: absolute;
-  left: 0; right: 0;
-  bottom: -22px;
-  height: 10px;
-  margin: 0 8px;
-  background: hsl(38 88% 52%);
-  border-radius: 2px;
-  box-shadow: 0 4px 18px hsl(38 92% 58% / .25);
-}
-.landing-torii-post {
-  position: absolute;
-  top: 22px;
-  left: 28px;
-  width: 18px;
-  height: 218px;
-  background: linear-gradient(180deg, hsl(38 92% 58%), hsl(24 80% 42%));
-  border-radius: 3px;
-  box-shadow: 0 8px 30px hsl(38 92% 58% / .18);
-}
-.landing-torii-post.right {
-  left: auto;
-  right: 28px;
+@media (max-width: 780px) {
+  .landing-torii {
+    width: 200px;
+  }
+  .landing-torii-svg {
+    max-width: 200px;
+  }
 }
 
 .landing-copy { max-width: 640px; }

@@ -33,6 +33,38 @@ export function h(tag, attrs = {}, children = []) {
 
 export function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
 
+/**
+ * SVG element builder. Same shape as h(), but uses the SVG namespace so
+ * elements render correctly inside <svg>. Only text/dataset/on-handlers get
+ * special treatment; everything else becomes an attribute via setAttribute.
+ * No innerHTML surface — same XSS posture as h().
+ */
+export function svg(tag, attrs = {}, children = []) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v === false || v == null) continue;
+    if (k === 'text') el.textContent = v;
+    else if (k.startsWith('on') && typeof v === 'function') {
+      el.addEventListener(k.slice(2).toLowerCase(), v);
+    } else if (k === 'dataset' && v && typeof v === 'object') {
+      Object.assign(el.dataset, v);
+    } else {
+      el.setAttribute(k, v);
+    }
+  }
+  const kids = Array.isArray(children) ? children : [children];
+  for (const c of kids) {
+    if (c == null || c === false) continue;
+    if (typeof c === 'string' || typeof c === 'number') {
+      el.appendChild(document.createTextNode(String(c)));
+    } else {
+      el.appendChild(c);
+    }
+  }
+  return el;
+}
+
 export function formatSats(n) {
   if (n == null || isNaN(n)) return '—';
   if (n >= 100_000) return (n / 1_000).toFixed(1) + 'k';
