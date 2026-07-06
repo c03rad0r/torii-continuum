@@ -20,10 +20,12 @@ const AGENT = process.env.CONTINUUM_AGENT || 'https://agent.orangesync.tech';
 
 async function clearStore(page) {
   await page.evaluate(() => {
-    localStorage.removeItem('continuum.v1');
-    localStorage.removeItem('contin...n.v1'); // session token
-    localStorage.removeItem('continuum.theme');
-  });
+    try {
+      localStorage.removeItem('continuum.v1');
+      localStorage.removeItem('contin...n.v1'); // session token
+      localStorage.removeItem('continuum.theme');
+    } catch(e) { /* may not have origin yet — safe to ignore */ }
+  }).catch(() => {});
 }
 
 async function navigateAndWait(page, hash) {
