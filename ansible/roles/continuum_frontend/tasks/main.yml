@@ -1,0 +1,40 @@
+---
+# Frontend role — clone repo, build Vite SPA with VITE_AGENT_URL, deploy dist/
+
+- name: Clone frontend repo
+  git:
+    repo: "{{ continuum_repo_url }}"
+    dest: "{{ continuum_agent_dir }}/frontend_repo"
+    version: "{{ continuum_repo_branch }}"
+    force: true
+  become: true
+  become_user: "{{ continuum_user }}"
+
+- name: Install frontend dependencies
+  shell: |
+    cd {{ continuum_agent_dir }}/frontend_repo
+    npm install
+  become: true
+  become_user: "{{ continuum_user }}"
+  args:
+    creates: "{{ continuum_agent_dir }}/frontend_repo/node_modules"
+
+- name: Build frontend with VITE_AGENT_URL
+  shell: |
+    cd {{ continuum_agent_dir }}/frontend_repo
+    VITE_AGENT_URL="https://{{ continuum_agent_domain }}" npm run build
+  become: true
+  become_user: "{{ continuum_user }}"
+  args:
+    creates: "{{ continuum_agent_dir }}/frontend_repo/dist/index.html"
+  environment:
+    VITE_AGENT_URL: "https://{{ continuum_agent_domain }}"
+
+- name: Copy built frontend to serve location
+  copy:
+    src: "{{ continuum_agent_dir }}/frontend_repo/dist/"
+    dest: "{{ continuum_frontend_dir }}/dist/"
+    owner: "{{ caddy_user | default('www-data') }}"
+    group: "{{ caddy_user | default('www-data') }}"
+    mode: "0755"
+    remote_src: true
