@@ -1,157 +1,113 @@
-# Continuum — Session Handover
+# Continuum VPS Deployment — Handover
 
-Paste this whole block at the start of a new Perplexity Computer session to resume work seamlessly.
+## What This Is
 
----
+A complete Ansible-based one-click installer for Continuum. Clone, set 5 environment variables, run one command, get a live Continuum instance with TLS.
 
-## Project
+## PR
 
-- **Name:** Continuum — a local-first project engine + marketplace shell for Torii Quest and related nostr-shaped work.
-- **Repo:** `ChiefmonkeyArt/torii-continuum` on the Perplexity git proxy.
-- **Local workspace path:** `/home/user/workspace/torii-continuum`
-- **Live URL:** https://continuum-torii.pplx.app
-- **Publish site_id:** `00acfee3-6cd6-477f-8d0f-36f84a6f6963`  ← ALWAYS pass this on publish updates
-- **Publish app_slug:** `continuum-torii`
-- **App asset_id (Perplexity preview):** `c82245ab-ac3c-4283-847b-f0e604adde1d`
-- **Visibility settings URL:** https://www.perplexity.ai/computer/a/c82245ab-ac3c-4283-847b-f0e604adde1d?open-publish=true
-- **Old (legacy) URL still up separately:** https://continuum.pplx.app — read-only oversight surface from earlier build, unrelated to this app's publish chain.
+**https://github.com/ChiefmonkeyArt/torii-continuum/pull/1**
 
-## Stack
+Branch: `feat/ansible-deploy` (5 commits)
 
-- **Frontend:** Vite (dev + build), Vitest (tests). Vanilla JS SPA + hash router. Static bundle. LocalStorage for theme + nostr-shaped events + session token.
-- **Agent (`agent/`, v0.2.0-alpha+):** Node 20 + Fastify (`fastify@^4.28.1`), `nostr-tools@^2.7.2` for NIP-07 verify, `@cashu/cashu-ts@^2.1.0` for the Cashu wallet, `yaml@^2.5.1` for config. Runs as a systemd service on the operator's VPS. Frontend points at it via `VITE_AGENT_URL` (build-time) or `window.__CONTINUUM_AGENT_URL__` (runtime). Demo build on pplx.app intentionally omits this so it stays offline/mock.
-- Auth: NIP-07 challenge (kind 22242) verified server-side, session token is `iat.exp.pk.hmacSig` HMAC-SHA256, 24h TTL.
+## What's Delivered
 
-## Design system (matches https://continuum.pplx.app aesthetic)
+| Component | Location | Description |
+|-----------|----------|-------------|
+| Ansible roles | `ansible/roles/` | system, identity, continuum_agent, caddy |
+| Deploy playbook | `ansible/playbooks/deploy.yml` | Runs all 4 roles in sequence |
+| Individual playbooks | `ansible/playbooks/01-05*.yml` | Run individual phases |
+| Config template | `ansible/roles/continuum_agent/templates/config.yaml.j2` | Full agent config |
+| Caddyfile template | `ansible/roles/caddy/templates/Caddyfile.j2` | Reverse proxy + TLS |
+| Environment vars | `ansible/.env.example` | All variables documented |
+| Install guide | `INSTALL.md` | Operator quickstart |
+| Architecture ref | `ansible/README.md` | Full technical reference |
+| Playwright tests | `tests/playwright/` | 21 tests (6 API + 15 SPA) |
 
-- **Palette (dark, HSL space-separated so alpha ops work):**
-  - `--background: 30 12% 8%`
-  - `--foreground: 40 16% 93%`
-  - `--card: 32 10% 12%` / `--card-border: 32 10% 20%`
-  - `--primary: 38 92% 58%` (amber)
-  - `--muted-foreground: 38 8% 62%`
-  - `--sidebar: 30 12% 10%` / `--sidebar-accent: 32 10% 18%`
-- **Palette (light):**
-  - `--background: 40 33% 97%`
-  - `--foreground: 36 14% 13%`
-  - `--primary: 36 92% 46%` (deeper amber)
-- **Fonts (loaded in `index.html`):**
-  - Display: Cabinet Grotesk (Fontshare)
-  - Body: Satoshi (Fontshare)
-  - Mono: JetBrains Mono (Google Fonts)
-- **Radius:** `0.75rem`
-- **Theme toggle:** sun/moon SVG in sidebar; respects `prefers-color-scheme`.
+## Identity Model
 
-## File map
+The operator provides their npub at install time. No nsec on the server.
 
-- `index.html` — Fontshare + Google Fonts preconnect + stylesheets, `theme-color="#1a1613"`.
-- `src/main.js` — bootstrap.
-- `src/shell.js` — sidebar, theme toggle, footer note ("Local-first…").
-- `src/router.js` — hash router.
-- `src/views/projects.js` — Projects list.
-- `src/views/projectHome.js` — single project page (milestones + todos).
-- `src/views/marketplace.js` — bounty rows, "ours" highlighting.
-- `src/views/dashboard.js` — oversight cards + by-project progress.
-- `src/views/routstr.js` — Routstr AI model picker + Cashu wallet mock.
-- `src/data/{schema,store,seed}.js` — mock nostr-shaped event store.
-- `src/styles/theme.css` — HSL tokens, both themes.
-- `src/styles/layout.css` — sidebar + page-header (amber eyebrow + display title).
-- `src/styles/pages.css` — cards, milestones, todos, marketplace rows.
-- `src/styles/chat.css` — bottom chat dock (mock).
-
-## Build + deploy commands
-
-```bash
-# Local dev
-cd /home/user/workspace/torii-continuum
-npm ci
-npm run dev            # vite dev server
-npm test               # vitest
-
-# Production build
-npm run build          # outputs to /home/user/workspace/torii-continuum/dist
-
-# Preview deploy (thread-attached app card)
-pplx-tool deploy_website <<'JSON'
-{
-  "project_path": "/home/user/workspace/torii-continuum/dist",
-  "site_name": "Continuum",
-  "entry_point": "index.html",
-  "should_validate": true
-}
-JSON
-# api_credentials=["pplx-tool:deploy_website"]
-
-# Publish update to live URL (ALWAYS pass site_id — no subdomain picker)
-pplx-tool publish_website <<'JSON'
-{
-  "project_path": "/home/user/workspace/torii-continuum",
-  "dist_path": "/home/user/workspace/torii-continuum/dist",
-  "app_name": "Continuum",
-  "site_id": "00acfee3-6cd6-477f-8d0f-36f84a6f6963"
-}
-JSON
-# api_credentials=["pplx-tool:publish_website"]
-
-# Commit + push
-cd /home/user/workspace/torii-continuum && \
-  git add -A && \
-  git -c user.email=chiefmonkey@hodlr.rocks -c user.name="Chiefmonkey" \
-    commit -m "…" && \
-  git push origin main
-# api_credentials=["github"]
+```
+Browser (Plebeian Signer holds nsec)
+    ↓ signs NIP-07 challenge
+Agent validates against admin_npub in config.yaml
+    ↓ grants session cookie (HMAC with session_secret)
 ```
 
-## Publishing rules to remember
+To change admin: edit `admin_npub` in `config.yaml`, restart agent.
 
-- **Preview vs publish:** `deploy_website` is the thread-attached preview (safe, unlimited). `publish_website` updates the live `continuum-torii.pplx.app` URL — do it only when the user asks.
-- **Always pass `site_id`** on updates. Without it, the tool shows a subdomain picker and can create a duplicate site.
-- **Order matters:** `deploy_website` must be called first with the same `dist_path` before `publish_website` in the same session.
-- **Security review required before every publish:** run a subagent with `/home/user/workspace/skills/website-building/website-publishing/security_subagent_prompt.md` and pass BLOCK findings back to the user.
-- **Published-site limits:** no `api_credentials`, no LLM APIs, no external tool connectors at runtime. This app is static-only so unaffected.
-- **Do not use `publish_website` to unpublish.** If user asks to unpublish, direct them to the app card's Unpublish button.
+## Verified Working On
 
-## Git state (as of handover)
+- Ubuntu 22.04 (VPS1, Caddy in Docker)
+- Debian 13 (VPS2, Caddy as systemd)
 
-- Branch: `main`
-- Remote: `https://git-agent-proxy.perplexity.ai/ChiefmonkeyArt/torii-continuum.git`
-- Recent commits:
-  - `56107da` feat(design): match continuum.pplx.app bronze/amber aesthetic
-  - `480b891` feat(design): adopt original Torii Continuum oversight aesthetic + light theme
-  - `5969c41` fix(build): relative base so assets resolve under proxy prefixes
-  - `0baf451` feat(v0.1.0): Continuum app builder MVP
-  - `2e1664a` Initial commit
+Both deployed via the same playbook with zero code changes between them.
 
-## Related projects (for cross-linking)
+## Quick Test
 
-- `ChiefmonkeyArt/torii-quest` — the Three.js/Rapier arena shooter. Live at `quest-torii.pplx.app` (site_id `93507979-679f-4aac-949d-20a4a33d7352`).
-- `/home/user/workspace/torii-quest/src/engine/dashboard/continuumData.js` — legacy source of the bronze/amber aesthetic that was ported here.
+```bash
+# Deploy
+export CONTINUUM_ADMIN_NPUB="npub1..."
+export CONTINUUM_DOMAIN="continuum.yourdomain.com"
+export CONTINUUM_AGENT_DOMAIN="agent.yourdomain.com"
+export CONTINUUM_VPS_IP="1.2.3.4"
+export CONTINUUM_VPS_USER="root"
+export ACME_EMAIL="admin@yourdomain.com"
+ansible-playbook ansible/playbooks/deploy.yml -i ansible/inventory/hosts.yml
 
-## Space context
+# Verify
+curl https://agent.yourdomain.com/api/health
+```
 
-- Perplexity Space: **Torii** (canonical URL `https://www.perplexity.ai/spaces/torii-8qN21IWsQ7.yuEGH9oNihw`).
-- Space instructions: use `NOSTR_ARENA_MASTER_TODO.md` as truth for tasks and `Strategy-&-Next-Steps.md` for strategy. Always optimize for efficiency, security, size, speed.
+## Caddy Modes
 
-## Next likely tasks (from prior turns)
+The Caddy role auto-detects which mode the target VPS is in:
 
-- Wire NIP-07 signer + publish events to a real nostr relay.
-- Replace mock chat responses with a real LLM route (Routstr / Cashu).
-- Add project creation flow (blank / GitHub / ngit).
-- Persist store to IndexedDB (currently in-memory + localStorage seed).
-- User's stated intent: self-host eventually; use `continuum-torii.pplx.app` until then.
+1. **systemd** — injects routes into `/etc/caddy/Caddyfile`, reloads via systemctl
+2. **Docker** — exports Caddyfile from container, injects routes, imports back, reloads
+3. **None** — downloads Caddy binary, creates systemd unit, starts fresh
 
-## User preferences (confirmed)
+No manual Caddy config needed.
 
-- Loves the bronze/amber aesthetic of `continuum.pplx.app` — this app must match it.
-- Wants both light AND dark themes.
-- Local-first + nostr from day one.
-- Optimize for efficiency, security, file size, and speed.
-- Terminology: never say "scrape/crawl"; prefer "collect/gather/read".
-- Uses ZorinOS + Comet on iMac; also has a Mac in `<devices>` for browser tasks.
+## Decisions Made
 
-## Resume checklist for the new session
+1. **npub, not keypair generation** — More secure, no race condition on public instances
+2. **Standalone ansible/ in repo** — Not a separate infra-kit dependency
+3. **Caddy, not nginx** — Automatic TLS, simpler config
+4. **systemd, not PM2** — Native process management, no extra deps
+5. **Cloudflare DNS optional** — Non-fatal if no API token; records can be manual
 
-1. Confirm the URL is still live: `curl -sI https://continuum-torii.pplx.app | head -1`
-2. Pull latest: `cd /home/user/workspace/torii-continuum && git pull origin main`
-3. Read this file first, then check `src/data/store.js` and `src/router.js` for structure.
-4. For any publish, use `site_id: "00acfee3-6cd6-477f-8d0f-36f84a6f6963"`.
+## Files Changed vs upstream/main
+
+```
+ ansible/.env.example                              |  35 ++
+ ansible/README.md                                 | 140 +++++
+ ansible/ansible.cfg                               |   5 +
+ ansible/inventory/group_vars/all.yml              |  53 +++
+ ansible/inventory/hosts.yml                       |   8 +
+ ansible/playbooks/01-system.yml                   |   8 +
+ ansible/playbooks/02-identity.yml                 |   8 +
+ ansible/playbooks/03-continuum-agent.yml          |   9 +
+ ansible/playbooks/05-caddy.yml                    |   8 +
+ ansible/playbooks/deploy.yml                      |  11 +
+ ansible/roles/caddy/defaults/main.yml             |   8 +
+ ansible/roles/caddy/handlers/main.yml             |  14 +
+ ansible/roles/caddy/tasks/main.yml                | 161 +++++++
+ ansible/roles/caddy/templates/Caddyfile.j2        |  19 +
+ ansible/roles/caddy/templates/caddy.service.j2    |  20 +
+ ansible/roles/continuum_agent/defaults/main.yml   |   5 +
+ ansible/roles/continuum_agent/handlers/main.yml   |  10 +
+ ansible/roles/continuum_agent/tasks/main.yml      |  91 +++++
+ ansible/roles/continuum_agent/templates/config.yaml.j2 | 63 ++++
+ ansible/roles/continuum_agent/templates/continuum-agent.service.j2 | 16 ++
+ ansible/roles/identity/tasks/main.yml             |  76 +++++
+ ansible/roles/system/tasks/main.yml               |  46 +++
+ INSTALL.md                                        |  83 ++++
+ tests/playwright/.gitignore                       |   3 +
+ tests/playwright/agent-api.spec.ts                |  99 +++++
+ tests/playwright/happy-path.spec.ts               | 168 +++++++++
+ tests/playwright/package.json                     |  20 +
+ tests/playwright/playwright.config.ts             |  18 +
+ HANDOVER.md                                       | (this file)
+```
