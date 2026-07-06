@@ -1,0 +1,55 @@
+---
+# System role — create user, install Node 20, create directories
+
+- name: Create continuum system user
+  user:
+    name: "{{ continuum_user }}"
+    system: yes
+    create_home: yes
+    home: "{{ continuum_home }}"
+    shell: /bin/bash
+    groups: sudo
+    append: yes
+
+- name: Set home directory permissions
+  file:
+    path: "{{ continuum_home }}"
+    mode: "0750"
+    owner: "{{ continuum_user }}"
+    group: "{{ continuum_user }}"
+
+- name: Create directory structure
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ continuum_user }}"
+    group: "{{ continuum_user }}"
+    mode: "0750"
+  loop:
+    - "{{ continuum_agent_dir }}"
+    - "{{ continuum_data_dir }}"
+    - "{{ continuum_identity_dir }}"
+    - "{{ continuum_frontend_dir }}"
+
+- name: Install Node.js {{ node_version }} LTS (NodeSource)
+  shell: |
+    curl -fsSL "https://deb.nodesource.com/setup_{{ node_version }}.x" | bash -
+    apt-get install -y nodejs
+  args:
+    creates: /usr/bin/node
+
+- name: Verify Node.js version
+  command: node --version
+  register: node_version_check
+  changed_when: false
+
+- name: Display Node version
+  debug:
+    msg: "Node.js installed: {{ node_version_check.stdout }}"
+
+- name: Install pynostr for identity generation
+  pip:
+    name: pynostr
+    state: present
+    extra_args: "--break-system-packages"
+  when: continuum_admin_npub | length == 0
