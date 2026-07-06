@@ -1,12 +1,29 @@
 # Panic Key Setup — `kind:30097` `emergency_wipe_authority`
 
-The panic key is a single Nostr event whose mere presence in the agent's
-decrypted memory cache **collapses the destructive-intent double-signature
-cooldown to a single signature**. It exists so the operator can wipe the
-character stack **under duress** without needing a second device.
+**Optional but recommended.** The panic key is a single Nostr event whose
+mere presence in the agent's decrypted memory cache **collapses the
+destructive-intent double-signature cooldown to a single signature**. It
+exists so the operator can wipe the character stack **under duress**
+without needing a second device.
 
-If you never expect duress: still generate one. The cost of having it is
-zero. The cost of not having it during a real emergency is total.
+Wipes work without it. The normal 30096 `destructive_intent` flow (60s
+cooldown + double signature from your primary signer) is the default and
+covers every non-duress case. The panic key only matters when your
+primary signer is unavailable, coerced, or compromised.
+
+If you're not sure whether you need one: you probably don't yet. Get
+comfortable with the normal flow first, then add a 30097 later if the
+threat model warrants it. Enable it in `config.yaml` under `panic_key:`
+once generated.
+
+Storage options (least to most durable):
+
+- **Password manager only** — fine for most threat models. Treat the key
+  like a seed phrase, not a website password.
+- **Password manager + paper/steel backup** — recommended if you value
+  the emergency override at all.
+- **Hardware signer (Coldcard-style / dedicated nostr device)** — for
+  operators who genuinely expect duress scenarios.
 
 ---
 

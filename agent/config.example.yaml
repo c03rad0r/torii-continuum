@@ -178,6 +178,22 @@ destructive:
   # the memory cache.
   required_signatures: 2
 
+panic_key:
+  # The 30097 emergency-wipe authority is OPTIONAL. Wipes work fine without
+  # one via the normal double-signature path above. Enabling this adds a
+  # single-signature emergency override (see agent/PANIC_KEY_SETUP.md).
+  #
+  # false (default): no panic key expected. Chat and wipes run normally.
+  # true:            a 30097 event may be unlocked into the cache to
+  #                  collapse required_signatures to 1 for wipes.
+  enabled: false
+
+  # If true, /api/memory/unlock returns `panic_key_nudge: true` on the FIRST
+  # unlock of a session that lacks a 30097 in the ciphertext store. The
+  # Console shows a one-time card explaining the tradeoff. Skippable and
+  # remembered per admin_npub. Set to false to silence the nudge entirely.
+  nudge_on_first_unlock: true
+
 
 # ─────────────────────────────────────────────────────────────
 # Logging & cost accounting

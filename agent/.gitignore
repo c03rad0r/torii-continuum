@@ -25,6 +25,7 @@ memory/intents/
 memory/panic/
 memory/episodic/
 memory/reflect-watermark.json
+memory/panic-key-nudge.json
 skills/*.enc
 
 # Systemd override if generated locally

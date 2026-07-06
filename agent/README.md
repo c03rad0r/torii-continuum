@@ -25,7 +25,7 @@ See `CHARACTER.md`, `SOURCES.md`, and `PANIC_KEY_SETUP.md`.
 - **`kind:30094` semantic_fact** — one durable belief or preference per event.
 - **`kind:30095` procedural_skill** — a reflex applied before the model speaks.
 - **`kind:30096` destructive_intent** — proposal to wipe. 60s cooldown + double-signature.
-- **`kind:30097` emergency_wipe_authority** — the panic key. Collapses cooldown to single-sig.
+- **`kind:30097` emergency_wipe_authority** — the panic key (**optional**). If registered, collapses cooldown to single-sig for wipes. Skip it and the normal double-signature flow still works.
 
 All five kinds are NIP-44 v2 encrypted to the operator's own npub. The
 agent stores only ciphertext. Plaintext lives in RAM only, populated

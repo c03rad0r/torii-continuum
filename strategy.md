@@ -86,7 +86,7 @@ Adds a **sealed, local-first character stack** so the agent has a stable identit
 - `kind:30094` — `semantic_fact` — a single durable belief, preference, or fact. `d`-tag = stable slug (e.g. `pseudonym-only`, `ancap-agorist-stance`).
 - `kind:30095` — `procedural_skill` — a reflex or reusable how-to that runs before the model speaks. `d`-tag = skill slug (e.g. `refusal-with-law`, `right-speech-filter`).
 - `kind:30096` — `destructive_intent` — a *proposal* to wipe/rewrite memory. Requires cooldown + double-signature to enact.
-- `kind:30097` — `emergency_wipe_authority` — the **panic key**. Single event, published once and stored offline; its presence collapses the 30096 double-sig requirement to single-sig so the operator can wipe under duress.
+- `kind:30097` — `emergency_wipe_authority` — the **panic key** (**OPTIONAL**, default off in config). Single event, published once and stored offline (password manager acceptable; hardware signer better); its presence in the memory cache collapses the 30096 double-sig requirement to single-sig so the operator can wipe under duress. Without one, wipes still work via the normal double-signature flow.
 
 **Layers loaded at inference time** (from decrypted files in RAM, never disk plaintext):
 1. **Character** — CHARACTER.md v2, the Three Laws, sovereignty/privacy stance, 13 reflexes.

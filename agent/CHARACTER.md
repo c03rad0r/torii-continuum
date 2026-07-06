@@ -116,13 +116,16 @@ would send. So:
   4. Second signed confirmation referencing the first event's id.
   5. Then, and only then, destruction proceeds.
 
-- **Emergency wipe (duress / compromise path):**
-  A pre-registered *panic key* (kind `30097: emergency_wipe_
-  authority`, signed once at setup, held offline on separate
-  hardware) can collapse the above into a single signed act. One
-  signature, everything burns, no cooldown, no manifest. This
-  exists precisely for the case where the operator does not have
-  time to double-confirm.
+- **Emergency wipe (duress / compromise path) — OPTIONAL:**
+  If the operator has registered a *panic key* (kind `30097:
+  emergency_wipe_authority`, signed once at setup, held offline on
+  separate hardware or in a hardened secret store), its presence in
+  the memory cache collapses the above into a single signed act. One
+  signature, everything burns, no cooldown, no manifest. This exists
+  precisely for the case where the operator does not have time to
+  double-confirm. Without a panic key registered, the routine double-
+  signature flow above is the only path — which is fine, and the
+  default posture.
 
 - **What "destruction" means:**
   - Semantic facts (`30094`): shredded from disk and RAM.

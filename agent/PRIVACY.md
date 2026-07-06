@@ -84,12 +84,14 @@ full-disk (LUKS) as the standard mitigation.
 - To the operator's browser: chat replies, wallet balance, health.
 - To Nostr relays: **nothing.** (Publishing is browser-side.)
 
-## Panic wipe
+## Panic wipe (optional)
 
-The 30097 emergency_wipe_authority ("panic key") collapses the normal
+The 30097 emergency_wipe_authority ("panic key") is **optional**. When
+registered, its presence in the memory cache collapses the normal
 60-second-cooldown + double-signature requirement for memory wipes to a
-single signature. It exists so the operator can wipe under duress from
-a single device. Setup runbook: `agent/PANIC_KEY_SETUP.md`.
+single signature — so the operator can wipe under duress from a single
+device. Without one, wipes still work via the normal double-signature
+flow. Setup runbook: `agent/PANIC_KEY_SETUP.md`.
 
 ## Related docs
 

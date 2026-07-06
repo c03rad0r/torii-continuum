@@ -65,6 +65,55 @@ await memory.loadCharacter();
 const chatSkill = createChatSkill(routstr, app.log, { memory, reflector });
 
 // ─────────────────────────────────────────────────────────────
+// Panic-key nudge state — one-time hint, per admin_npub
+// ─────────────────────────────────────────────────────────────
+//
+// The 30097 emergency-wipe authority is OPTIONAL. On the first /api/memory/unlock
+// where the ciphertext store contains no 30097, we return `panic_key_nudge: true`
+// so the Console can show a skippable card. Dismissal is remembered on disk.
+// Panic-key optionality is independent of this nudge — set config.panic_key.enabled
+// or config.panic_key.nudge_on_first_unlock to silence it entirely.
+
+const NUDGE_STATE_PATH = join(AGENT_ROOT, 'memory', 'panic-key-nudge.json');
+
+async function readNudgeState() {
+  try {
+    const raw = await readFile(NUDGE_STATE_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch { return {}; }
+}
+
+async function writeNudgeState(state) {
+  await mkdir(dirname(NUDGE_STATE_PATH), { recursive: true });
+  await writeFile(NUDGE_STATE_PATH, JSON.stringify(state, null, 2), 'utf8');
+}
+
+async function ciphertextsHavePanicKey() {
+  const relDir = dirForKind(KINDS.EMERGENCY_WIPE);
+  const absDir = join(AGENT_ROOT, relDir);
+  try {
+    const files = await readdir(absDir);
+    return files.some((f) => f.endsWith('.enc'));
+  } catch { return false; }
+}
+
+async function maybePanicKeyNudge(npub) {
+  if (cfg.panic_key?.nudge_on_first_unlock === false) return false;
+  if (cfg.panic_key?.enabled === true) return false; // already opted in
+  const state = await readNudgeState();
+  if (state[npub]?.dismissed) return false;
+  if (await ciphertextsHavePanicKey()) return false;
+  return true;
+}
+
+async function dismissPanicKeyNudge(npub) {
+  const state = await readNudgeState();
+  state[npub] = { dismissed: true, at: new Date().toISOString() };
+  await writeNudgeState(state);
+}
+
+// ─────────────────────────────────────────────────────────────
 // Auth middleware — attach to routes that require it
 // ─────────────────────────────────────────────────────────────
 async function requireAdmin(req, reply) {
@@ -83,7 +132,7 @@ async function requireAdmin(req, reply) {
 app.get('/api/health', async () => ({
   ok: true,
   service: 'torii-continuum-agent',
-  version: '0.2.4-alpha',
+  version: '0.2.5-alpha',
   time: new Date().toISOString(),
   memory_unlocked: memoryCache.isUnlocked(),
 }));
@@ -195,7 +244,22 @@ app.post('/api/memory/unlock', { preHandler: requireAdmin }, async (req, reply) 
   }));
   const result = memoryCache.unlock(req.session.npub, normalised);
   const rootCheck = memory.verifyCharacterRoot();
-  return { ok: true, ...result, character_root_verified: rootCheck.ok, reason: rootCheck.reason || null };
+  const panicNudge = await maybePanicKeyNudge(req.session.npub);
+  return {
+    ok: true,
+    ...result,
+    character_root_verified: rootCheck.ok,
+    reason: rootCheck.reason || null,
+    panic_key_nudge: panicNudge,
+  };
+});
+
+// POST /api/memory/panic-nudge/dismiss — one-time "got it" acknowledgement
+// from the Console. Writes memory/panic-key-nudge.json so we never show it
+// again for this npub. Panic key remains optional either way.
+app.post('/api/memory/panic-nudge/dismiss', { preHandler: requireAdmin }, async (req) => {
+  await dismissPanicKeyNudge(req.session.npub);
+  return { ok: true };
 });
 
 // POST /api/memory/lock — explicit relock. Panic sends `reason: "panic"`.
