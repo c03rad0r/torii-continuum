@@ -1,12 +1,47 @@
 ---
-# Caddy role — install Caddy, deploy reverse proxy config
+# Caddy role — detect existing Caddy, inject Continuum routes, reload
+# Handles three scenarios:
+#   1. systemd Caddy (most common — VPS2)
+#   2. Docker Caddy (VPS1)
+#   3. No Caddy — install fresh
 
-- name: Check if Caddy already installed
+# ──────────────────────────────────────────────
+# Detect existing Caddy
+# ──────────────────────────────────────────────
+- name: Check for systemd Caddy
+  shell: systemctl is-active caddy 2>/dev/null
+  register: caddy_systemd_check
+  changed_when: false
+  ignore_errors: true
+
+- name: Check for Docker Caddy
+  shell: "docker ps 2>/dev/null | grep -i caddy || true"
+  register: caddy_docker_check
+  changed_when: false
+  ignore_errors: true
+
+- name: Check for Caddy binary
   stat:
-    path: "{{ caddy_binary_path }}"
-  register: caddy_bin
+    path: /usr/bin/caddy
+  register: caddy_binary_check
 
-- name: Download and install Caddy
+- name: Set Caddy mode fact
+  set_fact:
+    caddy_mode: >-
+      {{
+        'systemd' if caddy_systemd_check.stdout == 'active'
+        else 'docker' if caddy_docker_check.stdout | length > 0
+        else 'none'
+      }}
+
+- name: Display Caddy mode
+  debug:
+    msg: "Caddy detected: {{ caddy_mode }} (systemd={{ caddy_systemd_check.stdout }}, docker={{ caddy_docker_check.stdout }})"
+
+# ──────────────────────────────────────────────
+# Install fresh Caddy if none exists
+# ──────────────────────────────────────────────
+- name: Install Caddy from binary (no existing Caddy found)
   block:
     - name: Download Caddy archive
       get_url:
@@ -21,52 +56,199 @@
         chmod 755 {{ caddy_binary_path }}
       args:
         creates: "{{ caddy_binary_path }}"
-  when: not caddy_bin.stat.exists
 
-- name: Verify Caddy version
-  command: "{{ caddy_binary_path }} version"
-  register: caddy_version_check
+    - name: Create Caddy system user
+      user:
+        name: "{{ caddy_user }}"
+        system: true
+        create_home: false
+        shell: /usr/sbin/nologin
+
+    - name: Create Caddy directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ caddy_user }}"
+        group: "{{ caddy_user }}"
+        mode: "0755"
+      loop:
+        - "{{ caddy_config_dir }}"
+        - "{{ caddy_data_dir }}"
+
+    - name: Write base Caddyfile (empty)
+      copy:
+        content: ""
+        dest: "{{ caddy_config_dir }}/Caddyfile"
+        owner: "{{ caddy_user }}"
+        group: "{{ caddy_user }}"
+        mode: "0644"
+        force: false
+
+    - name: Deploy Caddy systemd unit
+      template:
+        src: caddy.service.j2
+        dest: /etc/systemd/system/caddy.service
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Enable and start Caddy
+      systemd:
+        name: caddy
+        enabled: true
+        daemon_reload: true
+        state: started
+  when: caddy_mode == 'none'
+
+# ──────────────────────────────────────────────
+# Inject Continuum routes into existing Caddyfile
+# Works for both systemd and Docker Caddy
+# ──────────────────────────────────────────────
+
+- name: Set Caddyfile path based on mode
+  set_fact:
+    caddyfile_path: >-
+      {{
+        caddy_config_dir ~ '/Caddyfile' if caddy_mode != 'docker'
+        else '/tmp/caddyfile-continuum-export'
+      }}
+
+- name: Read existing Caddyfile (systemd mode)
+  slurp:
+    src: "{{ caddy_config_dir }}/Caddyfile"
+  register: existing_caddyfile
+  when: caddy_mode == 'systemd'
+
+- name: Read existing Caddyfile (Docker mode — export from container)
+  shell: "docker exec {{ caddy_docker_check.stdout }} cat /etc/caddy/Caddyfile"
+  register: docker_caddyfile_content
+  when: caddy_mode == 'docker'
   changed_when: false
 
-- name: Create Caddy system user
-  user:
-    name: "{{ caddy_user }}"
-    system: true
-    create_home: false
-    shell: /usr/sbin/nologin
+- name: Write exported Caddyfile to temp (Docker mode)
+  copy:
+    content: "{{ docker_caddyfile_content.stdout }}"
+    dest: "{{ caddyfile_path }}"
+  when: caddy_mode == 'docker'
 
-- name: Create Caddy directories
+- name: Inject Continuum routes into Caddyfile
+  blockinfile:
+    path: "{{ caddyfile_path }}"
+    marker: "# {mark} CONTINUUM ROUTES"
+    block: |
+      {{ continuum_agent_domain }} {
+          reverse_proxy 127.0.0.1:{{ continuum_port }}
+          request_body {
+              max_size 512KB
+          }
+          header {
+              X-Content-Type-Options "nosniff"
+              X-Frame-Options "DENY"
+              Referrer-Policy "strict-origin-when-cross-origin"
+          }
+      }
+
+      {{ continuum_domain }} {
+          root * {{ continuum_frontend_dir }}/dist
+          file_server
+          try_files {path} /index.html
+          header {
+              X-Content-Type-Options "nosniff"
+              X-Frame-Options "DENY"
+              Referrer-Policy "strict-origin-when-cross-origin"
+          }
+      }
+  notify: "reload caddy {{ caddy_mode }}"
+
+- name: Import updated Caddyfile back into Docker container
+  shell: |
+    docker cp {{ caddyfile_path }} {{ caddy_docker_check.stdout }}:/etc/caddy/Caddyfile
+    docker exec {{ caddy_docker_check.stdout }} caddy reload --config /etc/caddy/Caddyfile
+  when: caddy_mode == 'docker'
+  notify: reload caddy docker
+
+- name: Clean up temp file (Docker mode)
   file:
-    path: "{{ item }}"
-    state: directory
-    owner: "{{ caddy_user }}"
-    group: "{{ caddy_user }}"
-    mode: "0755"
-  loop:
-    - "{{ caddy_config_dir }}"
-    - "{{ caddy_data_dir }}"
+    path: "{{ caddyfile_path }}"
+    state: absent
+  when: caddy_mode == 'docker'
 
-- name: Deploy Caddyfile
-  template:
-    src: Caddyfile.j2
-    dest: "{{ caddy_config_dir }}/Caddyfile"
-    owner: "{{ caddy_user }}"
-    group: "{{ caddy_user }}"
-    mode: "0644"
-  notify: reload caddy
+# ──────────────────────────────────────────────
+# Create Cloudflare DNS records (optional)
+# ──────────────────────────────────────────────
+- name: Create DNS records (Cloudflare)
+  block:
+    - name: Check existing DNS record for {{ continuum_domain }}
+      uri:
+        url: "https://api.cloudflare.com/client/v4/zones/{{ cloudflare_zone_id }}/dns_records?name={{ continuum_domain }}"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ cloudflare_api_token }}"
+        return_content: yes
+        status_code: [200, 400, 403]
+      register: dns_check_existing
+      ignore_errors: true
 
-- name: Deploy Caddy systemd unit
-  template:
-    src: caddy.service.j2
-    dest: /etc/systemd/system/caddy.service
-    owner: root
-    group: root
-    mode: "0644"
-  notify: reload systemd
+    - name: Create A record for {{ continuum_domain }} if missing
+      uri:
+        url: "https://api.cloudflare.com/client/v4/zones/{{ cloudflare_zone_id }}/dns_records"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ cloudflare_api_token }}"
+          Content-Type: "application/json"
+        body:
+          type: A
+          name: "{{ continuum_domain }}"
+          content: "{{ ansible_host }}"
+          proxied: false
+        body_format: json
+        status_code: [200, 400]
+      register: dns_create_frontend
+      when: dns_check_existing.json.result | length == 0
 
-- name: Enable and start Caddy
-  systemd:
-    name: caddy
-    enabled: true
-    daemon_reload: true
-    state: started
+    - name: Create A record for {{ continuum_agent_domain }} if missing
+      uri:
+        url: "https://api.cloudflare.com/client/v4/zones/{{ cloudflare_zone_id }}/dns_records"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ cloudflare_api_token }}"
+          Content-Type: "application/json"
+        body:
+          type: A
+          name: "{{ continuum_agent_domain }}"
+          content: "{{ ansible_host }}"
+          proxied: false
+        body_format: json
+        status_code: [200, 400]
+      register: dns_create_agent
+      when: dns_check_existing.json.result | length == 0
+
+    - name: Display DNS status
+      debug:
+        msg: >
+          DNS: {{ continuum_domain }} → {{ ansible_host }}
+          {% if dns_create_frontend.json is defined and dns_create_frontend.json.success %} (created){% endif %},
+          {{ continuum_agent_domain }} → {{ ansible_host }}
+          {% if dns_create_agent.json is defined and dns_create_agent.json.success %} (created){% endif %}
+  when: cloudflare_api_token | length > 0 and cloudflare_zone_id | length > 0
+  ignore_errors: true
+
+# ──────────────────────────────────────────────
+# Wait for TLS cert provisioning
+# ──────────────────────────────────────────────
+- name: Wait for Caddy to provision TLS cert
+  uri:
+    url: "https://{{ continuum_agent_domain }}/api/health"
+    return_content: yes
+    validate_certs: no
+  register: caddy_tls_check
+  until: caddy_tls_check.status == 200
+  retries: 20
+  delay: 5
+  ignore_errors: true
+
+- name: Display TLS status
+  debug:
+    msg: >
+      TLS for {{ continuum_agent_domain }}:
+      {{ 'OK' if caddy_tls_check.status == 200 else 'PENDING — Caddy may need a minute to issue cert' }}

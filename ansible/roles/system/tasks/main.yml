@@ -1,15 +1,14 @@
 ---
-# System role — create user, install Node 20, create directories
+# System role — create user, ensure Node.js 20, create directories
+# Idempotent: safe to run multiple times
 
 - name: Create continuum system user
   user:
     name: "{{ continuum_user }}"
-    system: yes
-    create_home: yes
+    system: true
+    create_home: true
     home: "{{ continuum_home }}"
     shell: /bin/bash
-    groups: sudo
-    append: yes
 
 - name: Set home directory permissions
   file:
@@ -31,25 +30,31 @@
     - "{{ continuum_identity_dir }}"
     - "{{ continuum_frontend_dir }}"
 
-- name: Install Node.js {{ node_version }} LTS (NodeSource)
-  shell: |
-    curl -fsSL "https://deb.nodesource.com/setup_{{ node_version }}.x" | bash -
-    apt-get install -y nodejs
-  args:
-    creates: /usr/bin/node
+- name: Check if Node.js is installed
+  command: node --version
+  register: node_check
+  changed_when: false
+  ignore_errors: true
+
+- name: Install Node.js 20 LTS (only if missing or wrong version)
+  block:
+    - name: Add NodeSource repository
+      shell: curl -fsSL https://deb.nodesource.com/setup_{{ node_version }}.x | bash -
+
+    - name: Install Node.js
+      apt:
+        name: nodejs
+        state: present
+        update_cache: true
+  when: >
+    node_check.failed or
+    not node_check.stdout.startswith('v' ~ node_version)
 
 - name: Verify Node.js version
   command: node --version
-  register: node_version_check
+  register: node_version_final
   changed_when: false
 
 - name: Display Node version
   debug:
-    msg: "Node.js installed: {{ node_version_check.stdout }}"
-
-- name: Install pynostr for identity generation
-  pip:
-    name: pynostr
-    state: present
-    extra_args: "--break-system-packages"
-  when: continuum_admin_npub | length == 0
+    msg: "Node.js: {{ node_version_final.stdout }}"

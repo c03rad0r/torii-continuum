@@ -1,21 +1,25 @@
 ---
 # Continuum agent role — clone repo, render config, deploy systemd unit, start service
+# NOTE: Clone as root then chown to avoid ACL issues on Debian 13
 
-- name: Clone torii-continuum repo (fork)
+- name: Clone torii-continuum repo
   git:
     repo: "{{ continuum_repo_url }}"
     dest: "{{ continuum_agent_dir }}/repo"
     version: "{{ continuum_repo_branch }}"
     force: true
-  become: true
-  become_user: "{{ continuum_user }}"
+
+- name: Fix ownership of repo
+  file:
+    path: "{{ continuum_agent_dir }}/repo"
+    owner: "{{ continuum_user }}"
+    group: "{{ continuum_user }}"
+    recurse: true
 
 - name: Install npm dependencies (production only)
   shell: |
     cd {{ continuum_install_dir }}
-    npm install --omit=dev
-  become: true
-  become_user: "{{ continuum_user }}"
+    sudo -u {{ continuum_user }} npm install --omit=dev
   args:
     creates: "{{ continuum_install_dir }}/node_modules"
 
@@ -52,8 +56,8 @@
 - name: Enable and start continuum-agent
   systemd:
     name: continuum-agent
-    enabled: yes
-    daemon_reload: yes
+    enabled: true
+    daemon_reload: true
     state: started
   register: agent_start
 
@@ -65,16 +69,53 @@
   until: health_check.status == 200
   retries: 20
   delay: 3
-  when: agent_start is defined
-
-- name: Verify agent version
-  uri:
-    url: "http://127.0.0.1:{{ continuum_port }}/api/health"
-    return_content: yes
-  register: health_data
-  changed_when: false
 
 - name: Display agent status
   debug:
-    msg: "Continuum agent running: {{ health_data.json }}"
-  when: health_data.json is defined
+    msg: "Continuum agent running: {{ health_check.json.service }} v{{ health_check.json.version }}"
+
+# Frontend build
+- name: Clone repo for frontend build
+  git:
+    repo: "{{ continuum_repo_url }}"
+    dest: "{{ continuum_agent_dir }}/frontend_repo"
+    version: "{{ continuum_repo_branch }}"
+    force: true
+
+- name: Fix ownership of frontend repo
+  file:
+    path: "{{ continuum_agent_dir }}/frontend_repo"
+    owner: "{{ continuum_user }}"
+    group: "{{ continuum_user }}"
+    recurse: true
+
+- name: Install frontend dependencies
+  shell: "cd {{ continuum_agent_dir }}/frontend_repo && sudo -u {{ continuum_user }} npm install"
+  args:
+    creates: "{{ continuum_agent_dir }}/frontend_repo/node_modules"
+
+- name: Build frontend with VITE_AGENT_URL
+  shell: |
+    cd {{ continuum_agent_dir }}/frontend_repo
+    sudo -u {{ continuum_user }} env VITE_AGENT_URL="https://{{ continuum_agent_domain }}" npm run build
+  args:
+    creates: "{{ continuum_agent_dir }}/frontend_repo/dist/index.html"
+
+- name: Copy built frontend to serve location
+  copy:
+    src: "{{ continuum_agent_dir }}/frontend_repo/dist/"
+    dest: "{{ continuum_frontend_dir }}/dist/"
+    owner: "{{ continuum_user }}"
+    group: "{{ continuum_user }}"
+    mode: "0755"
+    remote_src: true
+
+- name: Make frontend readable by Caddy (traverse home dirs)
+  file:
+    path: "{{ item }}"
+    mode: "0755"
+  loop:
+    - "{{ continuum_home }}"
+    - "{{ continuum_agent_dir }}"
+    - "{{ continuum_frontend_dir }}"
+    - "{{ continuum_frontend_dir }}/dist"
