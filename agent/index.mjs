@@ -16,11 +16,21 @@
 
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+import { writeFile, mkdir, unlink, readdir, readFile } from 'node:fs/promises';
 import { loadConfig } from './core/config.mjs';
 import { createAuth } from './core/auth.mjs';
 import { createWallet } from './core/wallet.mjs';
 import { createRoutstr } from './core/routstr.mjs';
 import { createChatSkill } from './skills/chat.mjs';
+import { createMemoryCache, validateCiphertext, ciphertextFilename, fingerprintCiphertext } from './lib/crypto.mjs';
+import { createMemoryLoader } from './lib/memory.mjs';
+import { createReflector } from './lib/reflect.mjs';
+import { KINDS, dirForKind } from './lib/events.mjs';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const AGENT_ROOT = __dirname;
 
 const cfg = loadConfig();
 
@@ -45,7 +55,14 @@ await app.register(cors, {
 const auth = createAuth(cfg);
 const wallet = await createWallet(cfg, app.log);
 const routstr = createRoutstr(cfg, wallet, app.log);
-const chatSkill = createChatSkill(routstr, app.log);
+
+// Character + memory stack (CONT-CHARACTER-1)
+const memoryCache = createMemoryCache(app.log);
+const memory = createMemoryLoader({ cache: memoryCache, agentRoot: AGENT_ROOT, log: app.log });
+const reflector = createReflector({ agentRoot: AGENT_ROOT, cache: memoryCache, log: app.log });
+await memory.loadCharacter();
+
+const chatSkill = createChatSkill(routstr, app.log, { memory, reflector });
 
 // ─────────────────────────────────────────────────────────────
 // Auth middleware — attach to routes that require it
@@ -66,8 +83,9 @@ async function requireAdmin(req, reply) {
 app.get('/api/health', async () => ({
   ok: true,
   service: 'torii-continuum-agent',
-  version: '0.2.0-alpha',
+  version: '0.2.4-alpha',
   time: new Date().toISOString(),
+  memory_unlocked: memoryCache.isUnlocked(),
 }));
 
 app.post('/api/auth/challenge', async (req, reply) => {
@@ -137,6 +155,160 @@ app.post('/api/chat', { preHandler: requireAdmin }, async (req, reply) => {
 });
 
 // ─────────────────────────────────────────────────────────────
+// Character + memory routes (all admin-gated)
+// ─────────────────────────────────────────────────────────────
+
+// GET /api/character — the current character view (plaintext CHARACTER.md +
+// its hash + whether the signed 30092 root matches).
+app.get('/api/character', { preHandler: requireAdmin }, async () => {
+  const status = memory.status();
+  const fragments = memory.promptFragments();
+  return {
+    character_loaded: status.character_loaded,
+    character_hash: status.character_hash,
+    character_root_verified: status.character_root_verified,
+    character_root_reason: status.character_root_reason,
+    character_text: fragments.character,
+    counts: fragments.counts,
+  };
+});
+
+// GET /api/memory — non-sensitive status snapshot.
+app.get('/api/memory', { preHandler: requireAdmin }, async () => {
+  return memory.status();
+});
+
+// POST /api/memory/unlock — browser posts the decrypted plaintext bundle.
+// Every entry has kind, d_tag, content (JSON), created_at, event_id (optional).
+app.post('/api/memory/unlock', { preHandler: requireAdmin }, async (req, reply) => {
+  const entries = req.body?.entries;
+  if (!Array.isArray(entries)) {
+    return reply.code(400).send({ error: 'body.entries[] required' });
+  }
+  const normalised = entries.map((e) => ({
+    eventId: e.event_id || e.eventId || null,
+    kind: e.kind,
+    dTag: e.d_tag || e.dTag,
+    content: e.content,
+    createdAt: e.created_at || e.createdAt || Math.floor(Date.now() / 1000),
+    source: 'unlock',
+  }));
+  const result = memoryCache.unlock(req.session.npub, normalised);
+  const rootCheck = memory.verifyCharacterRoot();
+  return { ok: true, ...result, character_root_verified: rootCheck.ok, reason: rootCheck.reason || null };
+});
+
+// POST /api/memory/lock — explicit relock. Panic sends `reason: "panic"`.
+app.post('/api/memory/lock', { preHandler: requireAdmin }, async (req) => {
+  const reason = typeof req.body?.reason === 'string' ? req.body.reason : 'operator-lock';
+  memoryCache.clear(reason);
+  return { ok: true };
+});
+
+// POST /api/memory/store — write a ciphertext blob to disk. Body:
+//   { ciphertext, kind, d_tag, event_id? }
+// Agent stores raw ciphertext keyed on event id (or a random draft tag).
+app.post('/api/memory/store', { preHandler: requireAdmin }, async (req, reply) => {
+  const { ciphertext, kind, d_tag, event_id } = req.body || {};
+  const v = validateCiphertext(ciphertext);
+  if (!v.ok) return reply.code(400).send({ error: `bad ciphertext: ${v.reason}` });
+  if (!KINDS || !Object.values(KINDS).includes(kind)) {
+    return reply.code(400).send({ error: `unknown kind ${kind}` });
+  }
+  if (typeof d_tag !== 'string' || d_tag.length === 0 || d_tag.length > 64) {
+    return reply.code(400).send({ error: 'd_tag required (1..64 chars)' });
+  }
+  let filename;
+  try {
+    filename = ciphertextFilename(event_id || null);
+  } catch (e) {
+    return reply.code(400).send({ error: e.message });
+  }
+  const relDir = dirForKind(kind);
+  const absDir = join(AGENT_ROOT, relDir);
+  await mkdir(absDir, { recursive: true });
+  const absPath = join(absDir, filename);
+  await writeFile(absPath, ciphertext, 'utf8');
+  app.log.info(`[memory] stored ${kind}:${d_tag} → ${relDir}/${filename} (fp=${fingerprintCiphertext(ciphertext)})`);
+  return { ok: true, path: `${relDir}/${filename}`, fingerprint: fingerprintCiphertext(ciphertext) };
+});
+
+// GET /api/memory/ciphertexts — list all encrypted files so browser can
+// pull them down, decrypt, and POST back to /api/memory/unlock.
+app.get('/api/memory/ciphertexts', { preHandler: requireAdmin }, async () => {
+  const out = [];
+  for (const kind of Object.values(KINDS)) {
+    const relDir = dirForKind(kind);
+    const absDir = join(AGENT_ROOT, relDir);
+    let files;
+    try {
+      files = await readdir(absDir);
+    } catch { continue; }
+    for (const f of files) {
+      if (!f.endsWith('.enc')) continue;
+      const body = await readFile(join(absDir, f), 'utf8').catch(() => null);
+      if (!body) continue;
+      out.push({ kind, path: `${relDir}/${f}`, ciphertext: body });
+    }
+  }
+  return { count: out.length, entries: out };
+});
+
+// POST /api/reflect — trigger an offline reflection pass. Never signs.
+app.post('/api/reflect', { preHandler: requireAdmin }, async (req) => {
+  const limit = Math.min(Math.max(Number(req.body?.limit) || 10, 1), 50);
+  const dryRun = req.body?.dry_run === true;
+  const result = await reflector.reflect({ limit, dryRun });
+  return result;
+});
+
+// GET /api/pending — list draft events awaiting operator signature.
+app.get('/api/pending', { preHandler: requireAdmin }, async () => {
+  const dir = join(AGENT_ROOT, 'pending');
+  await mkdir(dir, { recursive: true });
+  const files = await readdir(dir);
+  const drafts = [];
+  for (const f of files) {
+    if (!f.endsWith('.draft.json')) continue;
+    try {
+      const buf = await readFile(join(dir, f), 'utf8');
+      const obj = JSON.parse(buf);
+      drafts.push({ file: f, kind: obj.kind, tags: obj.tags, proposed_at: obj._proposed_at });
+    } catch { /* skip */ }
+  }
+  drafts.sort((a, b) => (b.proposed_at || 0) - (a.proposed_at || 0));
+  return { count: drafts.length, drafts };
+});
+
+// GET /api/pending/:file — return one draft's full payload for signing.
+app.get('/api/pending/:file', { preHandler: requireAdmin }, async (req, reply) => {
+  const name = req.params.file;
+  if (!/^[a-zA-Z0-9._-]+\.draft\.json$/.test(name)) {
+    return reply.code(400).send({ error: 'bad filename' });
+  }
+  try {
+    const buf = await readFile(join(AGENT_ROOT, 'pending', name), 'utf8');
+    return JSON.parse(buf);
+  } catch (e) {
+    return reply.code(404).send({ error: `not found: ${e.message}` });
+  }
+});
+
+// DELETE /api/pending/:file — discard a draft (after signing or reject).
+app.delete('/api/pending/:file', { preHandler: requireAdmin }, async (req, reply) => {
+  const name = req.params.file;
+  if (!/^[a-zA-Z0-9._-]+\.draft\.json$/.test(name)) {
+    return reply.code(400).send({ error: 'bad filename' });
+  }
+  try {
+    await unlink(join(AGENT_ROOT, 'pending', name));
+    return { ok: true };
+  } catch (e) {
+    return reply.code(404).send({ error: e.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────
 // Startup
 // ─────────────────────────────────────────────────────────────
 
@@ -149,6 +321,7 @@ try {
   app.log.info(`admin npub: ${cfg.admin_npub.slice(0, 12)}...`);
   app.log.info(`cashu mints: ${wallet.mints.join(', ') || '(none)'}`);
   app.log.info(`routstr endpoint: ${cfg.routstr.endpoint}`);
+  app.log.info(`character loaded: ${memory.status().character_loaded}, memory unlocked: ${memoryCache.isUnlocked()}`);
 } catch (err) {
   app.log.error({ err }, 'listen failed');
   process.exit(1);
@@ -158,6 +331,7 @@ try {
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.on(signal, async () => {
     app.log.info(`received ${signal}, shutting down`);
+    memoryCache.clear(`signal ${signal}`);
     await app.close();
     process.exit(0);
   });

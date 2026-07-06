@@ -77,6 +77,37 @@ Turn Continuum from a read-only mockup dashboard into a sovereign personal AI + 
 
 Full scope, success criteria, and non-goals live in `continuum-todo.md` under CONT-AGENT-1 and in the Space Brain at `projects/self-learning-continuum.md`.
 
+### CONT-CHARACTER-1 — character + memory infrastructure (active)
+
+Adds a **sealed, local-first character stack** so the agent has a stable identity, values, and skills between sessions — without ever leaking to Nostr by default.
+
+**Nostr event kinds (all NIP-44 v2 encrypted to operator's own npub; local-only unless explicit opt-in):**
+- `kind:30092` — `character_root` — the operator-signed root of the character tree. One per operator. `d`-tag = `"root"`.
+- `kind:30094` — `semantic_fact` — a single durable belief, preference, or fact. `d`-tag = stable slug (e.g. `pseudonym-only`, `ancap-agorist-stance`).
+- `kind:30095` — `procedural_skill` — a reflex or reusable how-to that runs before the model speaks. `d`-tag = skill slug (e.g. `refusal-with-law`, `right-speech-filter`).
+- `kind:30096` — `destructive_intent` — a *proposal* to wipe/rewrite memory. Requires cooldown + double-signature to enact.
+- `kind:30097` — `emergency_wipe_authority` — the **panic key**. Single event, published once and stored offline; its presence collapses the 30096 double-sig requirement to single-sig so the operator can wipe under duress.
+
+**Layers loaded at inference time** (from decrypted files in RAM, never disk plaintext):
+1. **Character** — CHARACTER.md v2, the Three Laws, sovereignty/privacy stance, 13 reflexes.
+2. **Semantic** — facts and preferences ("pseudonym-only", "proud maximalist", "communism was never a candidate").
+3. **Procedural** — reflexes that run before the model speaks (right-speech filter, refusal-with-law, harae, disposability-confirm).
+4. **Episodic (read-only at reflect time only)** — the agent *never* reads its own past chat log during a live turn. It only reads it during offline reflection to propose new semantic/procedural drafts into `agent/pending/`.
+
+**Signing model:** the agent **never signs on its own**. All 30092/30094/30095/30096/30097 events are drafted as unsigned JSON in `agent/pending/*.draft.json` and signed via Plebeian Signer with an explicit human click.
+
+**Storage default:** encrypted at rest (`<eventid>.enc`), NIP-44 v2 to `admin_npub`. Plaintext lives in tmpfs / RAM only. Never published unless the operator flips an explicit per-event `publish: true` at sign time.
+
+**Files added this slice:**
+- `agent/lib/crypto.mjs` — NIP-44 v2 wrap/unwrap via signer round-trip
+- `agent/lib/events.mjs` — draft (never sign) helpers for 30092/30094/30095/30096/30097
+- `agent/lib/memory.mjs` — decrypting loader (character + semantic + procedural, RAM only)
+- `agent/lib/reflect.mjs` — offline pass that reads episodic and drops drafts into `pending/`
+- `agent/PANIC_KEY_SETUP.md` — runbook for generating and cold-storing the 30097 event
+- Seed drafts under `agent/memory/semantic/*.draft.json` and `agent/skills/*.draft.json`
+
+**Endpoints added:** `/api/character`, `/api/memory`, `/api/reflect` (all admin-gated).
+
 ### Later slices (reserved, not scheduled)
 
 - **CONT-AGENT-2** — Nostr write path via NIP-46 remote signer, once Plebeian Signer or an alternative ships it. Enables the agent to publish without a browser click for pre-approved skill outputs.

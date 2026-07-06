@@ -138,6 +138,48 @@ skills:
 
 
 # ─────────────────────────────────────────────────────────────
+# Character + memory stack (CONT-CHARACTER-1)
+# ─────────────────────────────────────────────────────────────
+#
+# The character stack is sealed at rest with NIP-44 v2 to the operator's OWN
+# npub. Decryption happens in the browser during /api/memory/unlock; the
+# agent never holds a key. See agent/PRIVACY.md for the full storage map
+# and agent/PANIC_KEY_SETUP.md for the emergency-wipe runbook.
+#
+character:
+  # Path to CHARACTER.md relative to agent/. If missing, the chat skill
+  # runs with the base skill instructions only.
+  character_md: "CHARACTER.md"
+  sources_md: "SOURCES.md"
+
+  # If true, the chat skill refuses to serve any turn while the memory
+  # cache is locked (no /api/memory/unlock has been called this boot).
+  # If false (default), chat runs with a "memory locked" notice and
+  # degrades gracefully.
+  require_unlock: false
+
+  # If the on-disk CHARACTER.md hash doesn't match the signed 30092
+  # character_root, the chat skill emits a warning in the system prompt.
+  # If true, chat outright refuses instead of warning.
+  refuse_on_root_mismatch: false
+
+reflect:
+  # Auto-run reflection on a schedule (cron-style). Empty = manual only.
+  # Reflection NEVER runs during a live chat turn, and NEVER signs.
+  schedule: ""
+  # Max drafts to propose per pass.
+  limit_per_pass: 10
+
+destructive:
+  # Cooldown seconds between propose (30096) and enact.
+  cooldown_sec: 60
+  # Signatures required to enact a destructive_intent when no panic key
+  # is loaded. Collapses to 1 when the 30097 panic key is present in
+  # the memory cache.
+  required_signatures: 2
+
+
+# ─────────────────────────────────────────────────────────────
 # Logging & cost accounting
 # ─────────────────────────────────────────────────────────────
 #

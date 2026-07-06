@@ -14,6 +14,24 @@ for a single operator:
 Everything is designed for **one admin npub, one VPS**. Multi-tenant is
 explicitly not a promise.
 
+As of v0.2.4-alpha (CONT-CHARACTER-1), the agent also owns a **sealed,
+local-first character stack** — stable identity, values, and reflexes
+that persist between sessions without ever leaking to Nostr by default.
+See `CHARACTER.md`, `SOURCES.md`, and `PANIC_KEY_SETUP.md`.
+
+### The character stack in one glance
+
+- **`kind:30092` character_root** — signed hash of `CHARACTER.md` + `SOURCES.md`.
+- **`kind:30094` semantic_fact** — one durable belief or preference per event.
+- **`kind:30095` procedural_skill** — a reflex applied before the model speaks.
+- **`kind:30096` destructive_intent** — proposal to wipe. 60s cooldown + double-signature.
+- **`kind:30097` emergency_wipe_authority** — the panic key. Collapses cooldown to single-sig.
+
+All five kinds are NIP-44 v2 encrypted to the operator's own npub. The
+agent stores only ciphertext. Plaintext lives in RAM only, populated
+via `POST /api/memory/unlock` after the browser has NIP-44-decrypted
+every `.enc` file. See the endpoint reference at the bottom of this file.
+
 ---
 
 ## 0. Prerequisites
@@ -175,7 +193,62 @@ The demo build at `continuum-torii.pplx.app` intentionally omits
 | `mint not whitelisted` on redeem | Add the mint URL to `cashu.mints` and restart |
 | Balance not updating | Check `memory/wallet/` permissions (should be `700`), then `systemctl restart continuum-agent` |
 
-## 10. Uninstall
+## 10. HTTP API reference (v0.2.4-alpha)
+
+All endpoints under `/api/` except the auth pair are admin-gated. Send
+`Authorization: Bearer <session-token>` obtained from `/api/auth/verify`.
+
+**Public:**
+- `GET /api/health`
+- `POST /api/auth/challenge`
+- `POST /api/auth/verify`
+
+**Wallet + chat (admin):**
+- `GET /api/wallet/balance`
+- `POST /api/wallet/receive`
+- `POST /api/chat`
+
+**Character (admin):**
+- `GET /api/character` — CHARACTER.md text + hash + signed-root verification
+
+**Memory (admin):**
+- `GET /api/memory` — non-sensitive status snapshot
+- `GET /api/memory/ciphertexts` — dump all `.enc` files for browser to decrypt
+- `POST /api/memory/unlock` — accepts decrypted plaintext bundle from browser
+- `POST /api/memory/lock` — wipe RAM cache
+- `POST /api/memory/store` — write one ciphertext blob (validated as NIP-44 v2)
+
+**Reflection + drafts (admin):**
+- `POST /api/reflect` — offline pass over episodic, drops drafts into `pending/`
+- `GET /api/pending` — list draft events awaiting signature
+- `GET /api/pending/:file` — fetch one draft for signing
+- `DELETE /api/pending/:file` — discard a draft
+
+The agent NEVER signs, NEVER publishes, NEVER holds an nsec. Signing
+happens in the operator's browser via Plebeian Signer, one click at a time.
+
+---
+
+## 11. Seeding the initial character stack
+
+```bash
+cd ~/agent/repo/agent
+node scripts/seed-drafts.mjs
+```
+
+Writes unsigned `.draft.json` files into `agent/pending/` for:
+- the 30092 character_root (anchors CHARACTER.md + SOURCES.md hashes)
+- ~10 seed 30094 semantic facts (pseudonym-only, ancap-agorist stance, etc.)
+- ~13 seed 30095 procedural skills (right-speech-filter, refusal-with-law, etc.)
+
+The operator then reviews each draft in the console, signs via Plebeian
+Signer (which also NIP-44-encrypts `content` to the operator's own npub),
+and POSTs the encrypted ciphertext to `/api/memory/store`. Each stored
+event replaces its predecessor by `(kind, d_tag)`.
+
+---
+
+## 12. Uninstall
 
 ```bash
 sudo systemctl disable --now continuum-agent
