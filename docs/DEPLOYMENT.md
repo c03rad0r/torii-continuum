@@ -323,8 +323,8 @@ Browser (Plebeian Signer — NIP-07)
     │           (TLS)      (built with VITE_AGENT_URL=https://agent.<domain>)
     │
     └──HTTPS──▶ Caddy ──▶ Continuum Agent (Fastify :8787)
-                (TLS)      ├── NIP-07 challenge/verify
-                           ├── admin_npub check → admin vs user role
+                (TLS)      ├── NIP-07 challenge/verify (admin-only)
+                           ├── admin_npub check → reject non-admin keys
                            ├── Cashu wallet float
                            └── Routstr proxy (api.routstr.com)
 ```
@@ -332,9 +332,11 @@ Browser (Plebeian Signer — NIP-07)
 The agent NEVER holds an nsec. It never signs anything. All signing happens
 in the browser via Plebeian Signer. The agent stores only:
 
-- `admin_npub` — the public npub that has admin access. Used to check
-  permissions on login.
+- `admin_npub` — the public npub that has admin access. Only this key
+  can log in. Non-admin keys are rejected (no multi-user system yet).
 - `session_secret` — internal HMAC key for session cookies. Not user-facing.
 
-See [docs/ADMIN-AUTH-DESIGN.md](ADMIN-AUTH-DESIGN.md) for the full auth
-model design document.
+**Note:** The agent currently supports **single-admin auth only**. There
+is no role system — only the npub in `admin_npub` can log in. See
+[docs/ADMIN-AUTH-DESIGN.md](ADMIN-AUTH-DESIGN.md) for a multi-role
+design proposal that would require code changes to implement.
