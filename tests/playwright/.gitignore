@@ -4,3 +4,4 @@ test-results/
 *.png
 *.zip
 *.log
+tests/playwright/test-results.json
