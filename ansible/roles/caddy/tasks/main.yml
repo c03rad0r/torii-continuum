@@ -1,0 +1,72 @@
+---
+# Caddy role — install Caddy, deploy reverse proxy config
+
+- name: Check if Caddy already installed
+  stat:
+    path: "{{ caddy_binary_path }}"
+  register: caddy_bin
+
+- name: Download and install Caddy
+  block:
+    - name: Download Caddy archive
+      get_url:
+        url: "{{ caddy_download_url }}"
+        dest: /tmp/caddy.tar.gz
+        timeout: 30
+
+    - name: Extract and install Caddy binary
+      shell: |
+        tar -xzf /tmp/caddy.tar.gz -C /tmp/ caddy
+        mv /tmp/caddy {{ caddy_binary_path }}
+        chmod 755 {{ caddy_binary_path }}
+      args:
+        creates: "{{ caddy_binary_path }}"
+  when: not caddy_bin.stat.exists
+
+- name: Verify Caddy version
+  command: "{{ caddy_binary_path }} version"
+  register: caddy_version_check
+  changed_when: false
+
+- name: Create Caddy system user
+  user:
+    name: "{{ caddy_user }}"
+    system: true
+    create_home: false
+    shell: /usr/sbin/nologin
+
+- name: Create Caddy directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ caddy_user }}"
+    group: "{{ caddy_user }}"
+    mode: "0755"
+  loop:
+    - "{{ caddy_config_dir }}"
+    - "{{ caddy_data_dir }}"
+
+- name: Deploy Caddyfile
+  template:
+    src: Caddyfile.j2
+    dest: "{{ caddy_config_dir }}/Caddyfile"
+    owner: "{{ caddy_user }}"
+    group: "{{ caddy_user }}"
+    mode: "0644"
+  notify: reload caddy
+
+- name: Deploy Caddy systemd unit
+  template:
+    src: caddy.service.j2
+    dest: /etc/systemd/system/caddy.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: reload systemd
+
+- name: Enable and start Caddy
+  systemd:
+    name: caddy
+    enabled: true
+    daemon_reload: true
+    state: started
