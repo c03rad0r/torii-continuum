@@ -4,70 +4,62 @@ One-click installer for the [Continuum](https://github.com/ChiefmonkeyArt/torii-
 project engine on a VPS. Installs the agent daemon, builds the frontend, and
 sets up Caddy reverse proxy with automatic TLS.
 
+Tested on Ubuntu 22.04 and Debian 13.
+
 ## Requirements
 
-- A VPS running **Ubuntu 22.04+** or **Debian 12+**
-- A domain/subdomain pointed at the VPS (for TLS)
-- SSH access to the VPS as root or a sudo-enabled user
-- **Optional:** Cloudflare API token for automated DNS (omit for manual DNS)
+- A VPS with a **public IP** (needed for TLS + NIP-07 cross-origin)
+- SSH access as root or a sudo-enabled user
+- **Ansible 2.x** on your local machine
+- **Plebeian Signer** (or any NIP-07 browser extension) — get your npub from it
+- Two DNS A records pointing at the VPS (or Cloudflare API token for automation)
 
 ## Quick Start
 
 ```bash
-# 1. Set your VPS IP and domain
+git clone https://github.com/ChiefmonkeyArt/torii-continuum.git
+cd torii-continuum
+
+# Set required variables
+export CONTINUUM_ADMIN_NPUB="npub1..."          # YOUR npub from Plebeian Signer
+export CONTINUUM_DOMAIN="continuum.example.com"  # frontend subdomain
+export CONTINUUM_AGENT_DOMAIN="agent.example.com" # API subdomain
 export CONTINUUM_VPS_IP="1.2.3.4"
-export BASE_DOMAIN="orangesync.tech"
-export CONTINUUM_DOMAIN="continuum.orangesync.tech"
-export CONTINUUM_AGENT_DOMAIN="agent.orangesync.tech"
+export CONTINUUM_VPS_USER="root"
 export ACME_EMAIL="admin@example.com"
 
-# 2. Run the deploy playbook
-ansible-playbook ansible/playbooks/deploy.yml
+# Deploy
+ansible-playbook ansible/playbooks/deploy.yml -i ansible/inventory/hosts.yml
 ```
 
-## Identity Management
+## Identity Model
 
-The ansible playbook **automatically generates** a Nostr keypair (npub/nsec)
-and a session secret on first deploy. These are saved to
-`/home/continuum/agent/identity/` on the VPS:
+The instance is locked to the npub you provide at install time via
+`CONTINUUM_ADMIN_NPUB`. Ansible validates the npub1... format and writes it
+to `config.yaml`. **No nsec (private key) ever touches the VPS** — signing
+happens entirely in your browser via Plebeian Signer.
 
-| File | Contents | Mode |
-|------|----------|------|
-| `secret.key` | Operator nsec (import into Plebeian Signer) | 0600 |
-| `public.key` | Operator npub (safe to share) | 0644 |
-| `session_secret` | Agent session HMAC key (64 hex chars) | 0600 |
+| What | Where |
+|------|-------|
+| npub (public key) | `config.yaml` on VPS, mode 0644 |
+| nsec (private key) | **Browser only** — Plebeian Signer, never on server |
+| session_secret | `config.yaml` on VPS, auto-generated 64 hex chars |
 
-The first run prints the generated identity — **save the nsec immediately**.
-If you lose it, you can recover from the VPS filesystem (ssh in and read it).
+To change the admin npub after install:
+```bash
+ssh user@your-vps
+sudo -u continuum vi /home/continuum/agent/repo/agent/config.yaml
+sudo systemctl restart continuum-agent
+```
 
-## Playbooks
+## Roles
 
-| # | Playbook | What it does |
-|---|----------|-------------|
-| 01 | `01-system.yml` | Create `continuum` user, install Node.js 20, create directories |
-| 02 | `02-identity.yml` | Generate or restore Nostr keypair + session secret |
-| 03 | `03-continuum-agent.yml` | Clone repo, render config.yaml, deploy systemd unit, start agent |
-| 04 | `04-frontend.yml` | Install deps, build Vite SPA with VITE_AGENT_URL, deploy static files |
-| 05 | `05-caddy.yml` | Install Caddy, deploy reverse proxy config, start with TLS |
-| - | `deploy.yml` | **Full stack** — runs 01-05 in order |
-
-## Configuration
-
-All variables are in `ansible/inventory/group_vars/all.yml`. Override via
-environment variables (prefixed with `CONTINUUM_`) before running ansible:
-
-| Env var | Default | Description |
-|---------|---------|-------------|
-| `CONTINUUM_VPS_IP` | (required) | VPS IP address |
-| `CONTINUUM_VPS_USER` | `root` | SSH user |
-| `BASE_DOMAIN` | `example.com` | Root domain |
-| `CONTINUUM_DOMAIN` | `continuum.<base>` | Frontend URL |
-| `CONTINUUM_AGENT_DOMAIN` | `agent.<base>` | Agent API URL |
-| `CONTINUUM_ADMIN_NPUB` | auto-generated | Skip key generation, use this npub |
-| `CONTINUUM_ADMIN_NSEC` | auto-generated | Skip key generation, use this nsec |
-| `CONTINUUM_SESSION_SECRET` | auto-generated | Skip session secret generation |
-| `CLOUDFLARE_API_TOKEN` | (optional) | Auto-configure DNS |
-| `ACME_EMAIL` | `admin@<domain>` | Let's Encrypt notification email |
+| Role | What it does |
+|------|-------------|
+| `system` | Creates `continuum` user, installs Node.js 20 LTS |
+| `identity` | Validates npub, generates session secret |
+| `continuum_agent` | Clones repo, installs deps, renders config.yaml, builds frontend, starts systemd service |
+| `caddy` | Detects existing Caddy or installs fresh, injects reverse proxy routes, provisions TLS |
 
 ## Architecture
 
@@ -75,22 +67,48 @@ environment variables (prefixed with `CONTINUUM_`) before running ansible:
 Browser (Plebeian Signer)
     ↓ HTTPS
 Caddy (TLS termination, subdomain routing)
-    ├── agent.continuum.<domain> → reverse proxy → agent daemon (127.0.0.1:8787)
-    └── continuum.<domain>       → file_server     → static Vite SPA
+    ├── agent.example.com → reverse_proxy → 127.0.0.1:8787
+    └── continuum.example.com → file_server → static Vite SPA
 
-Agent daemon (Node 20 + Fastify, listens 127.0.0.1:8787)
-    ├── NIP-07 auth (kind 22242 challenge/verify via Plebeian Signer)
+Agent daemon (Node 20 + Fastify, 127.0.0.1:8787)
+    ├── NIP-07 auth (kind 22242 challenge/verify)
     ├── Cashu wallet (on-VPS float, memory/wallet/)
-    └── Routstr client (api.routstr.com, Cashu-paid LLM)
+    └── Routstr client (LLM via Cashu)
 ```
 
-## Dual-Publish
+## Configuration
 
-Every push to this repo goes to both **GitHub** and **ngit**:
+All defaults live in `ansible/roles/*/defaults/main.yml` and
+`ansible/inventory/group_vars/all.yml`. Override via environment variables:
 
+| Env var | Required | Description |
+|---------|----------|-------------|
+| `CONTINUUM_ADMIN_NPUB` | **Yes** | Your npub from Plebeian Signer |
+| `CONTINUUM_DOMAIN` | **Yes** | Frontend subdomain |
+| `CONTINUUM_AGENT_DOMAIN` | **Yes** | Agent API subdomain |
+| `CONTINUUM_VPS_IP` | **Yes** | VPS IP address |
+| `CONTINUUM_VPS_USER` | No | SSH user (default: `root`) |
+| `ACME_EMAIL` | No | Let's Encrypt email |
+| `CLOUDFLARE_API_TOKEN` | No | Auto-create DNS records |
+| `CLOUDFLARE_ZONE_ID` | No | Required if using Cloudflare DNS |
+
+## Caddy Detection
+
+The Caddy role handles three scenarios:
+
+1. **systemd Caddy** — injects routes into `/etc/caddy/Caddyfile`, reloads
+2. **Docker Caddy** — exports Caddyfile, injects routes, imports back, reloads
+3. **No Caddy** — downloads binary, creates systemd unit, starts fresh
+
+## Verification
+
+After deploy:
+```bash
+# Agent health
+curl https://agent.example.com/api/health
+# Expected: {"ok":true,"service":"torii-continuum-agent","version":"..."}
+
+# Frontend
+curl -I https://continuum.example.com
+# Expected: HTTP/2 200
 ```
-git push origin <branch>
-git push --no-verify ngit <branch>
-```
-
-ngit mirror: [gitworkshop.dev](https://gitworkshop.dev/npub12m5exm2uk3xa674cc5r0hlyvccs5xxn7qv83ezuteefv5972nquq4j4szl/relay.ngit.dev/torii-continuum)

@@ -1,5 +1,5 @@
 ---
-- name: 02-identity — Generate or restore Nostr keypair + session secret
+- name: 02-identity — Validate admin npub, generate session secret
   hosts: continuum
   gather_facts: true
   become: true

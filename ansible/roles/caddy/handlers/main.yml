@@ -5,7 +5,7 @@
     state: reloaded
 
 - name: reload caddy docker
-  shell: "docker exec $(docker ps --format '{{.Names}}' | grep -i caddy | head -1) caddy reload --config /etc/caddy/Caddyfile"
+  shell: "docker exec $(docker ps --format '{% raw %}{{.Names}}{% endraw %}' | grep -i caddy | head -1) caddy reload --config /etc/caddy/Caddyfile"
 
 - name: reload caddy none
   systemd:
