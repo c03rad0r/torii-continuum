@@ -45,13 +45,14 @@ You are operating without decrypted access to your character stack, semantic fac
 - You may still help with app navigation and general questions.`;
 
 /**
- * @param {object} routstr
+ * @param {object} router  Model router (createModelRouter). Routes to Routstr or Ollama
+ *                          based on strategy and payment/availability. Same .chat() shape as routstr.
  * @param {object} log
  * @param {object} deps
  * @param {import('../lib/memory.mjs').createMemoryLoader extends (...a:any) => infer R ? R : never} deps.memory
  * @param {import('../lib/reflect.mjs').createReflector extends (...a:any) => infer R ? R : never} deps.reflector
  */
-export function createChatSkill(routstr, log, { memory, reflector } = {}) {
+export function createChatSkill(router, log, { memory, reflector } = {}) {
   async function handle({ message, context }) {
     // Code-side guards (procedural, kind 30095 with guard === "code-only")
     // run BEFORE we spend a satoshi on the model.
@@ -72,11 +73,13 @@ export function createChatSkill(routstr, log, { memory, reflector } = {}) {
     ];
 
     const started = Date.now();
-    const result = await routstr.chat({ skill: 'chat', messages });
+    // Router decides between Routstr (paid, sovereign) and Ollama (local, free).
+    // Same return shape as routstr.chat — plus a `provider` field on success.
+    const result = await router.chat({ skill: 'chat', messages });
     const duration = Date.now() - started;
 
     if (!result.ok) {
-      log.warn(`[chat] routstr failed: ${result.reason}`);
+      log.warn(`[chat] model call failed: ${result.reason}`);
       return { ok: false, reason: result.reason };
     }
 
@@ -100,8 +103,9 @@ export function createChatSkill(routstr, log, { memory, reflector } = {}) {
       ok: true,
       reply: result.content,
       model: result.model,
+      provider: result.provider,
       duration_ms: duration,
-      sats_spent: result.sats_spent,
+      sats_spent: result.sats_spent || 0,
     };
   }
 

@@ -1,0 +1,55 @@
+---
+# Torii Continuum installer — non-secret defaults.
+#
+# Copy to all.yml and edit. Secret values (admin_npub, session_secret,
+# cashu mint URLs if private) live in vault.yml.
+
+# ─────────────────────────────────────────────────────────────
+# Torii domain
+# ─────────────────────────────────────────────────────────────
+# Must have a DNS A record pointing at the VPS. Certbot uses this for
+# Let's Encrypt TLS. If you're testing on a subdomain that isn't public,
+# set torii_use_letsencrypt: false to skip cert issuance (nginx will
+# serve http:// only).
+torii_domain: "example.com"
+torii_use_letsencrypt: true
+torii_letsencrypt_email: "you@example.com"       # required by certbot
+
+# ─────────────────────────────────────────────────────────────
+# torii-base
+# ─────────────────────────────────────────────────────────────
+torii_base_repo: "https://github.com/ChiefmonkeyArt/torii-base.git"
+torii_base_version: "main"                         # branch, tag, or commit
+torii_root_app: "launcher"                         # launcher | continuum | plebeian | quest
+
+# ─────────────────────────────────────────────────────────────
+# Continuum
+# ─────────────────────────────────────────────────────────────
+continuum_repo: "https://github.com/ChiefmonkeyArt/torii-continuum.git"
+continuum_version: "main"                          # branch, tag, or commit
+continuum_mount_path: "/continuum"                 # keep in sync with launcher registry
+continuum_agent_host: "127.0.0.1"
+continuum_agent_port: 8787
+continuum_user: "continuum"                        # OS user the agent runs as
+
+# The Vite build reads VITE_AGENT_URL at build time. On a base-path deploy
+# this must equal continuum_mount_path so client-side fetches hit
+# /continuum/api/*, which nginx forwards to the agent on 127.0.0.1:8787
+# (the /continuum/ prefix is stripped by trailing-slash proxy_pass).
+continuum_vite_agent_url: "/continuum"
+
+# ─────────────────────────────────────────────────────────────
+# Ollama (optional local LLM)
+# ─────────────────────────────────────────────────────────────
+# When true, the ollama role installs the daemon on 127.0.0.1:11434,
+# pulls the models below, and flips ollama.enabled in the agent config.
+torii_enable_ollama: false
+ollama_bind: "127.0.0.1:11434"
+ollama_pull_models:
+  - "llama3.2:3b"
+  # - "qwen2.5:7b"           # uncomment for reflection tier (needs ~6 GB RAM)
+ollama_router_strategy: "routstr_first"            # routstr_first | ollama_first | ollama_only | routstr_only
+ollama_chat_model: "llama3.2:3b"
+ollama_reflect_model: "llama3.2:3b"                # bump to qwen2.5:7b for better reflection
+ollama_timeout_ms: 60000
+ollama_temperature: 0.4

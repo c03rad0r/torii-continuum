@@ -1,0 +1,67 @@
+---
+# Role: ollama (optional)
+# Installs Ollama, binds it to loopback, pulls the configured models,
+# and confirms the daemon is reachable on 127.0.0.1:11434.
+#
+# The continuum role's config.yaml.j2 flips ollama.enabled to true when
+# torii_enable_ollama is true, so this role and the agent config stay in sync.
+
+- name: Detect existing ollama binary
+  ansible.builtin.stat:
+    path: /usr/local/bin/ollama
+  register: ollama_bin
+
+- name: Install ollama (official installer)
+  ansible.builtin.shell: |
+    set -eo pipefail
+    curl -fsSL https://ollama.com/install.sh | sh
+  args:
+    executable: /bin/bash
+    creates: /usr/local/bin/ollama
+  when: not ollama_bin.stat.exists
+
+- name: Bind ollama to loopback via systemd override
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/ollama.service.d/override.conf
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [Service]
+      Environment="OLLAMA_HOST={{ ollama_bind }}"
+      Environment="OLLAMA_ORIGINS=http://127.0.0.1,http://localhost"
+  notify:
+    - reload systemd
+    - restart ollama
+
+- name: Ensure ollama.service.d exists
+  ansible.builtin.file:
+    path: /etc/systemd/system/ollama.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Enable and start ollama
+  ansible.builtin.systemd:
+    name: ollama
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Wait for ollama to answer on {{ ollama_bind }}
+  ansible.builtin.uri:
+    url: "http://{{ ollama_bind }}/api/tags"
+    status_code: 200
+  register: ollama_health
+  retries: 20
+  delay: 3
+  until: ollama_health.status == 200
+
+- name: Pull configured models (one at a time — big downloads)
+  ansible.builtin.command:
+    cmd: "/usr/local/bin/ollama pull {{ item }}"
+  loop: "{{ ollama_pull_models }}"
+  register: ollama_pull
+  changed_when: "'pulling manifest' in (ollama_pull.stdout | default(''))"
+  # ollama pull is safe to re-run — it no-ops when the model is up to date.

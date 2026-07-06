@@ -1,0 +1,149 @@
+---
+# Role: continuum
+# Installs the Continuum SPA + agent under /home/{{ continuum_user }}/.
+#
+# Layout on disk:
+#   /home/continuum/
+#     app/                        <- git checkout of torii-continuum
+#       dist/                     <- vite build output (served by nginx)
+#       agent/
+#         config.yaml             <- rendered from template (chmod 600)
+#         memory/                 <- wallet + costs + audit + panic-nudge state
+#         pending/                <- draft events awaiting signature
+#
+# Nginx: drops /opt/torii/nginx-fragments/continuum.conf. Registered with
+# the launcher via `torii register continuum {{ continuum_mount_path }}`.
+
+- name: Ensure continuum OS user exists
+  ansible.builtin.user:
+    name: "{{ continuum_user }}"
+    system: true
+    shell: /bin/bash
+    home: "/home/{{ continuum_user }}"
+    create_home: true
+
+- name: Ensure app checkout directory exists
+  ansible.builtin.file:
+    path: "/home/{{ continuum_user }}/app"
+    state: directory
+    owner: "{{ continuum_user }}"
+    group: "{{ continuum_user }}"
+    mode: '0750'
+
+- name: Clone (or update) torii-continuum
+  ansible.builtin.git:
+    repo: "{{ continuum_repo }}"
+    dest: "/home/{{ continuum_user }}/app"
+    version: "{{ continuum_version }}"
+    force: true
+    depth: 1
+  become_user: "{{ continuum_user }}"
+  register: continuum_git
+
+- name: Install npm dependencies (dev + prod, needed for vite build)
+  ansible.builtin.command:
+    cmd: npm ci
+    chdir: "/home/{{ continuum_user }}/app"
+  become_user: "{{ continuum_user }}"
+  environment:
+    NODE_ENV: development
+  when: continuum_git.changed
+  register: npm_install
+  changed_when: npm_install.rc == 0
+
+- name: Build Continuum SPA with base-path awareness
+  ansible.builtin.command:
+    cmd: npm run build
+    chdir: "/home/{{ continuum_user }}/app"
+  become_user: "{{ continuum_user }}"
+  environment:
+    NODE_ENV: production
+    VITE_AGENT_URL: "{{ continuum_vite_agent_url }}"
+  when: continuum_git.changed
+  register: continuum_build
+  changed_when: continuum_build.rc == 0
+
+- name: Install agent production dependencies
+  ansible.builtin.command:
+    cmd: npm ci --omit=dev
+    chdir: "/home/{{ continuum_user }}/app/agent"
+  become_user: "{{ continuum_user }}"
+  args:
+    creates: "/home/{{ continuum_user }}/app/agent/node_modules"
+
+- name: Render agent config.yaml
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: "/home/{{ continuum_user }}/app/agent/config.yaml"
+    owner: "{{ continuum_user }}"
+    group: "{{ continuum_user }}"
+    mode: '0600'
+  notify: restart continuum-agent
+
+- name: Ensure agent runtime dirs exist
+  ansible.builtin.file:
+    path: "/home/{{ continuum_user }}/app/agent/{{ item }}"
+    state: directory
+    owner: "{{ continuum_user }}"
+    group: "{{ continuum_user }}"
+    mode: '0700'
+  loop:
+    - memory
+    - memory/wallet
+    - pending
+    - ciphertexts
+
+- name: Install continuum-agent systemd unit
+  ansible.builtin.template:
+    src: continuum-agent.service.j2
+    dest: /etc/systemd/system/continuum-agent.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - reload systemd
+    - restart continuum-agent
+
+- name: Enable and start continuum-agent
+  ansible.builtin.systemd:
+    name: continuum-agent
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Render nginx fragment for /continuum
+  ansible.builtin.template:
+    src: continuum.nginx.conf.j2
+    dest: "/opt/torii/nginx-fragments/continuum.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: reload nginx
+
+- name: Register /continuum with torii launcher
+  ansible.builtin.shell: |
+    set -eo pipefail
+    source /opt/torii/env
+    /usr/local/bin/torii register continuum "Continuum" "{{ continuum_mount_path }}" "App builder + agent"
+  args:
+    executable: /bin/bash
+  changed_when: true
+
+- name: Set launcher root_app if requested
+  ansible.builtin.shell: |
+    set -eo pipefail
+    source /opt/torii/env
+    /usr/local/bin/torii set-root {{ torii_root_app | quote }}
+  args:
+    executable: /bin/bash
+  when: torii_root_app is defined
+  changed_when: true
+
+- name: Wait for agent to answer /api/health
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ continuum_agent_port }}/api/health"
+    status_code: 200
+  register: agent_health
+  retries: 15
+  delay: 2
+  until: agent_health.status == 200

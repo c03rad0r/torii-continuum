@@ -1,0 +1,30 @@
+---
+# Torii Continuum installer — secrets.
+#
+# Copy to vault.yml, fill in, then encrypt with:
+#   ansible-vault encrypt vault.yml
+#
+# Run playbook with --ask-vault-pass (or --vault-password-file).
+#
+# NEVER commit the plaintext vault.yml. NEVER put session_secret in a chat.
+
+# The nostr npub of the admin allowed to log in. NIP-07 challenge is verified
+# against this key. Only one admin per deployment.
+admin_npub: "npub1REPLACE_WITH_YOUR_PLEBEIAN_SIGNER_NPUB"
+
+# HMAC secret for session tokens. Generate with:
+#   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# 32 bytes hex = 64 characters. Rotate any time; existing sessions become invalid.
+session_secret: "REPLACE_WITH_64_HEX_CHARS"
+
+# Cashu mints the agent's on-VPS wallet will accept and use. First one is
+# the default for new tokens. Change these to Bitcoin-only, operator-trusted
+# mints. If unset, the agent falls back to config.example.yaml defaults.
+cashu_mints:
+  - "https://mint.minibits.cash/Bitcoin"
+  - "https://mint.coinos.io"
+
+# Torii sidecar admin token — used by `torii register`/`unregister`/`set-root`.
+# The bootstrap.sh script generates one automatically at /opt/torii/env if
+# unset. Leave commented to let bootstrap generate + persist a fresh token.
+# torii_admin_token: "REPLACE_WITH_64_HEX_CHARS"

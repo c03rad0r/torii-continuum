@@ -1,0 +1,63 @@
+---
+# Torii Continuum + Torii Base — full VPS installer.
+#
+# Runs on a fresh Ubuntu 22.04 or 24.04 host and produces:
+#
+#   https://<torii_domain>/            — Torii launcher (or promoted app)
+#   https://<torii_domain>/continuum/  — Torii Continuum Console (SPA)
+#   https://<torii_domain>/continuum/api/*  → agent on 127.0.0.1:8787
+#   (optional) 127.0.0.1:11434         — Ollama local model daemon
+#
+# Prerequisites:
+#   - DNS A record for {{ torii_domain }} pointing at the VPS IP.
+#   - SSH access as a sudoer (root or a passwordless-sudo user).
+#   - Ansible 2.14+ on your workstation.
+#
+# Usage:
+#   cp inventory.yml.example inventory.yml
+#   cp group_vars/all.yml.example group_vars/all.yml
+#   cp group_vars/vault.yml.example group_vars/vault.yml
+#   # edit them, then encrypt the vault:
+#   ansible-vault encrypt group_vars/vault.yml
+#   ansible-playbook -i inventory.yml site.yml --ask-vault-pass
+#
+# Roles run in order. `ollama` is opt-in — set `torii_enable_ollama: true`.
+
+- name: Install Torii Base + Continuum
+  hosts: torii
+  become: true
+  gather_facts: true
+
+  pre_tasks:
+    - name: Verify Ubuntu 22 or 24
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution == 'Ubuntu'
+          - ansible_distribution_major_version in ['22', '24']
+        fail_msg: "This installer supports Ubuntu 22.04 and 24.04 only. Detected {{ ansible_distribution }} {{ ansible_distribution_major_version }}."
+
+    - name: Verify torii_domain is set
+      ansible.builtin.assert:
+        that:
+          - torii_domain is defined
+          - torii_domain | length > 0
+          - torii_domain != 'example.com'
+        fail_msg: "Set torii_domain in group_vars/all.yml to your real domain."
+
+  roles:
+    - role: base
+      tags: [base]
+    - role: continuum
+      tags: [continuum]
+    - role: ollama
+      when: torii_enable_ollama | default(false) | bool
+      tags: [ollama]
+
+  post_tasks:
+    - name: Summary
+      ansible.builtin.debug:
+        msg:
+          - "Torii is up at https://{{ torii_domain }}/"
+          - "Continuum Console at https://{{ torii_domain }}/continuum/"
+          - "Run 'torii status' on the VPS for the current registry + root_app."
+          - "{{ 'Ollama enabled — pull models with: ollama pull llama3.2:3b' if (torii_enable_ollama | default(false) | bool) else 'Ollama disabled. Set torii_enable_ollama: true to add local models.' }}"

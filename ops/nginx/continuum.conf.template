@@ -1,0 +1,45 @@
+# /opt/torii/nginx-fragments/continuum.conf
+#
+# Continuum's nginx fragment. Dropped here by the Continuum installer.
+# The main torii.conf `include`s /opt/torii/nginx-fragments/*.conf inside
+# its https server{} block, so this file only defines `location` blocks.
+#
+# Layout:
+#   /continuum/       → the built Vite frontend (static files)
+#   /continuum/api/   → reverse-proxy to the agent daemon on 127.0.0.1:@AGENT_PORT@
+#
+# The trailing slashes on both /continuum/api/ AND proxy_pass are load-bearing:
+# they strip the /continuum prefix so the agent still sees `/api/*` internally.
+# This lets the same agent code run at / on pplx.app and at /continuum on a VPS.
+
+location /continuum/ {
+    alias @CONTINUUM_DIST@/;
+    index index.html;
+    try_files $uri $uri/ /continuum/index.html;
+
+    # Vite hashed assets — long-cache
+    location ~* /continuum/assets/.+\.(?:css|js|woff2?|svg|png|jpg|jpeg|webp)$ {
+        alias @CONTINUUM_DIST@/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
+    }
+}
+
+# Agent API — mount-prefix stripped before proxy_pass
+location /continuum/api/ {
+    proxy_pass http://127.0.0.1:@AGENT_PORT@/api/;
+    proxy_http_version 1.1;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Prefix /continuum;
+
+    # Chat + memory endpoints can be slow (Routstr round-trip, decrypt)
+    proxy_read_timeout 120s;
+    proxy_send_timeout 120s;
+
+    # 512 KB matches agent's bodyLimit; give a small headroom.
+    client_max_body_size 1m;
+}

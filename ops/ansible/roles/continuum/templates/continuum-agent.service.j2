@@ -1,0 +1,37 @@
+[Unit]
+Description=Torii Continuum Agent (Node.js)
+Documentation=https://github.com/ChiefmonkeyArt/torii-continuum
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ continuum_user }}
+Group={{ continuum_user }}
+WorkingDirectory=/home/{{ continuum_user }}/app/agent
+ExecStart=/usr/bin/node index.mjs
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=continuum-agent
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/{{ continuum_user }}/app/agent/memory /home/{{ continuum_user }}/app/agent/pending /home/{{ continuum_user }}/app/agent/ciphertexts
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+PrivateTmp=true
+PrivateDevices=true
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target

@@ -193,7 +193,73 @@ The demo build at `continuum-torii.pplx.app` intentionally omits
 | `mint not whitelisted` on redeem | Add the mint URL to `cashu.mints` and restart |
 | Balance not updating | Check `memory/wallet/` permissions (should be `700`), then `systemctl restart continuum-agent` |
 
-## 10. HTTP API reference (v0.2.4-alpha)
+## 9b. Local models with Ollama (optional, CONT-AGENT-1b)
+
+The agent can fall back to a local Ollama daemon when Routstr returns 402
+(Cashu float empty) or is unreachable. This keeps chat working offline
+and free, while preserving Routstr as the primary provider for frontier
+quality.
+
+### Install on the VPS
+
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+sudo systemctl edit ollama.service
+#   [Service]
+#   Environment="OLLAMA_HOST=127.0.0.1:11434"
+sudo systemctl restart ollama
+ollama pull llama3.2:3b
+```
+
+The Ansible installer (`ops/ansible/`, role `ollama`) automates all of
+that plus binds Ollama to loopback and pulls the models listed in
+`group_vars/all.yml`.
+
+### Enable in `agent/config.yaml`
+
+```yaml
+ollama:
+  enabled: true
+  endpoint: "http://127.0.0.1:11434"
+  model: "llama3.2:3b"
+  models:
+    chat:    "llama3.2:3b"
+    reflect: "qwen2.5:7b"
+  temperature: 0.4
+  timeout_ms: 60000
+
+model_router:
+  strategy: "routstr_first"   # or ollama_first | ollama_only | routstr_only
+```
+
+Restart the agent, then hit `GET /api/health/models` (admin-gated) to
+confirm both providers are reachable.
+
+### Model tier guide (Q4_K_M quant, CPU-only)
+
+| Model                  | Disk  | RAM    | 2 vCPU  | 4 vCPU  | Use case               |
+| ---------------------- | ----- | ------ | ------- | ------- | ---------------------- |
+| `llama3.2:3b`          | 2 GB  | 3 GB   | ~15 t/s | ~30 t/s | Starter chat, reflection |
+| `qwen2.5:7b`           | 5 GB  | 6 GB   | ~4 t/s  | ~7 t/s  | Reflection, thoughtful chat |
+| `llama3.1:8b`          | 5 GB  | 6 GB   | ~3 t/s  | ~5 t/s  | Chat when you want more |
+| `qwen2.5:14b`          | 9 GB  | 10 GB  | ~1 t/s  | ~2 t/s  | Reflection only (too slow for live chat) |
+
+For live chat on 8B+ models comfortably, use a GPU box.
+
+### Router strategies
+
+- `routstr_first` — **recommended.** Routstr for every turn; Ollama picks
+  up automatically when Routstr returns 402/payment or a network error.
+- `ollama_first` — Ollama first (free); Routstr as fallback.
+- `ollama_only` — never touch Routstr. Fully offline mode.
+- `routstr_only` — never touch Ollama. Original behaviour (pre-1b).
+
+Every successful chat response now carries a `provider` field (`routstr`
+or `ollama`) so the Console can surface which model actually answered.
+
+---
+
+## 10. HTTP API reference (v0.2.6-alpha)
 
 All endpoints under `/api/` except the auth pair are admin-gated. Send
 `Authorization: Bearer <session-token>` obtained from `/api/auth/verify`.
@@ -206,7 +272,8 @@ All endpoints under `/api/` except the auth pair are admin-gated. Send
 **Wallet + chat (admin):**
 - `GET /api/wallet/balance`
 - `POST /api/wallet/receive`
-- `POST /api/chat`
+- `POST /api/chat` — response now includes `provider: "routstr" | "ollama"`
+- `GET /api/health/models` — provider reachability + configured models
 
 **Character (admin):**
 - `GET /api/character` — CHARACTER.md text + hash + signed-root verification

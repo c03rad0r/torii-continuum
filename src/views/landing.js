@@ -255,7 +255,7 @@ export function renderLanding(mount) {
       toriiSvg(),
     ]),
     h('div', { class: 'landing-copy' }, [
-      h('div', { class: 'landing-eyebrow', text: 'Torii Continuum · v0.2.5-alpha' }),
+      h('div', { class: 'landing-eyebrow', text: 'Torii Continuum · v0.2.6-alpha' }),
       h('h1', { class: 'landing-title', text: 'The Gateway Project.' }),
       h('p', { class: 'landing-lede' }, [
         'Continuum is where your projects live as nostr events, pay in Cashu, and answer to no platform. Assistant included. Custody not.',

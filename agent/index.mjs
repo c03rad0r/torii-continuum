@@ -23,6 +23,8 @@ import { loadConfig } from './core/config.mjs';
 import { createAuth } from './core/auth.mjs';
 import { createWallet } from './core/wallet.mjs';
 import { createRoutstr } from './core/routstr.mjs';
+import { createOllama } from './core/ollama.mjs';
+import { createModelRouter } from './core/model-router.mjs';
 import { createChatSkill } from './skills/chat.mjs';
 import { createMemoryCache, validateCiphertext, ciphertextFilename, fingerprintCiphertext } from './lib/crypto.mjs';
 import { createMemoryLoader } from './lib/memory.mjs';
@@ -56,13 +58,19 @@ const auth = createAuth(cfg);
 const wallet = await createWallet(cfg, app.log);
 const routstr = createRoutstr(cfg, wallet, app.log);
 
+// Ollama fallback (CONT-AGENT-1b) — optional local-model provider.
+// Disabled by default; enable via config.ollama.enabled: true when Ollama
+// is running on the VPS. Router honours config.model_router.strategy.
+const ollama = createOllama(cfg, app.log);
+const router = createModelRouter({ routstr, ollama, cfg, log: app.log });
+
 // Character + memory stack (CONT-CHARACTER-1)
 const memoryCache = createMemoryCache(app.log);
 const memory = createMemoryLoader({ cache: memoryCache, agentRoot: AGENT_ROOT, log: app.log });
 const reflector = createReflector({ agentRoot: AGENT_ROOT, cache: memoryCache, log: app.log });
 await memory.loadCharacter();
 
-const chatSkill = createChatSkill(routstr, app.log, { memory, reflector });
+const chatSkill = createChatSkill(router, app.log, { memory, reflector });
 
 // ─────────────────────────────────────────────────────────────
 // Panic-key nudge state — one-time hint, per admin_npub
@@ -132,10 +140,37 @@ async function requireAdmin(req, reply) {
 app.get('/api/health', async () => ({
   ok: true,
   service: 'torii-continuum-agent',
-  version: '0.2.5-alpha',
+  version: '0.2.6-alpha',
   time: new Date().toISOString(),
   memory_unlocked: memoryCache.isUnlocked(),
 }));
+
+// GET /api/health/models — provider reachability probe.
+// Returns Routstr + Ollama status so the Console can show which providers
+// are live and which are enabled. Admin-gated to avoid leaking endpoints.
+app.get('/api/health/models', { preHandler: requireAdmin }, async () => {
+  const strategy = cfg.model_router?.strategy || 'routstr_first';
+  const ollamaEnabled = cfg.ollama?.enabled === true;
+  const ollamaProbe = ollamaEnabled ? await ollama.probe() : { ok: false, reason: 'disabled in config' };
+  return {
+    strategy,
+    routstr: {
+      enabled: true,
+      endpoint: cfg.routstr?.endpoint || null,
+      model: cfg.routstr?.model || null,
+    },
+    ollama: {
+      enabled: ollamaEnabled,
+      endpoint: cfg.ollama?.endpoint || null,
+      chat_model: cfg.ollama?.models?.chat || cfg.ollama?.model || null,
+      reflect_model: cfg.ollama?.models?.reflect || cfg.ollama?.model || null,
+      reachable: ollamaProbe.ok,
+      reason: ollamaProbe.reason || null,
+      models_available: ollamaProbe.models || null,
+    },
+    time: new Date().toISOString(),
+  };
+});
 
 app.post('/api/auth/challenge', async (req, reply) => {
   const clientIp = req.ip;
@@ -198,6 +233,7 @@ app.post('/api/chat', { preHandler: requireAdmin }, async (req, reply) => {
   return {
     reply: result.reply,
     model: result.model,
+    provider: result.provider,
     duration_ms: result.duration_ms,
     sats_spent: result.sats_spent,
   };
@@ -385,6 +421,8 @@ try {
   app.log.info(`admin npub: ${cfg.admin_npub.slice(0, 12)}...`);
   app.log.info(`cashu mints: ${wallet.mints.join(', ') || '(none)'}`);
   app.log.info(`routstr endpoint: ${cfg.routstr.endpoint}`);
+  app.log.info(`ollama: enabled=${cfg.ollama?.enabled === true} endpoint=${cfg.ollama?.endpoint || '(default)'}`);
+  app.log.info(`model router strategy: ${cfg.model_router?.strategy || 'routstr_first'}`);
   app.log.info(`character loaded: ${memory.status().character_loaded}, memory unlocked: ${memoryCache.isUnlocked()}`);
 } catch (err) {
   app.log.error({ err }, 'listen failed');

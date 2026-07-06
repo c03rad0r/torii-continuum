@@ -5,3 +5,9 @@ dist
 .env.local
 *.log
 .vite
+
+# Real secrets rendered/filled from *.example templates — never commit these.
+agent/config.yaml
+ops/ansible/group_vars/vault.yml
+ops/ansible/group_vars/all.yml
+ops/ansible/inventory.yml

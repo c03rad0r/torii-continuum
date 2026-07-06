@@ -1,0 +1,39 @@
+# /opt/torii/nginx-fragments/continuum.conf
+# Rendered by Ansible. Do NOT edit by hand — re-run the playbook instead.
+#
+# Included from /etc/nginx/sites-available/torii inside the https server{} block.
+# See ops/nginx/continuum.conf.template for the annotated source.
+
+location {{ continuum_mount_path }}/ {
+    alias /home/{{ continuum_user }}/app/dist/;
+    index index.html;
+    try_files $uri $uri/ {{ continuum_mount_path }}/index.html;
+
+    # Vite hashed assets — long-cache
+    location ~* {{ continuum_mount_path }}/assets/.+\.(?:css|js|woff2?|svg|png|jpg|jpeg|webp)$ {
+        alias /home/{{ continuum_user }}/app/dist/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
+    }
+}
+
+# Agent API — mount-prefix stripped before proxy_pass.
+# Trailing slashes on both {{ continuum_mount_path }}/api/ AND proxy_pass are load-bearing:
+# they strip the prefix so the agent still sees `/api/*` internally.
+location {{ continuum_mount_path }}/api/ {
+    proxy_pass http://{{ continuum_agent_host }}:{{ continuum_agent_port }}/api/;
+    proxy_http_version 1.1;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Prefix {{ continuum_mount_path }};
+
+    # Chat + memory endpoints can be slow (Routstr round-trip, decrypt)
+    proxy_read_timeout 120s;
+    proxy_send_timeout 120s;
+
+    # 512 KB matches agent's bodyLimit; give a small headroom.
+    client_max_body_size 1m;
+}

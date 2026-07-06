@@ -1,0 +1,55 @@
+---
+# Role: base
+# Clones torii-base and runs bootstrap.sh, which:
+#   - installs nginx, certbot, node 22, common utilities
+#   - creates the `torii` OS user
+#   - writes /opt/torii/env with a generated TORII_ADMIN_TOKEN
+#   - installs the launcher, the main nginx server block, and the sidecar
+#   - obtains a Let's Encrypt certificate for torii_domain (if enabled)
+#   - enables the torii-base-sidecar systemd unit
+#
+# Idempotency: bootstrap.sh is safe to re-run. It skips existing users,
+# doesn't re-issue certs when they're valid, and only reloads nginx when
+# the config actually changes.
+
+- name: Ensure /opt/torii-base checkout root exists
+  ansible.builtin.file:
+    path: /opt/torii-base-src
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Clone (or update) torii-base
+  ansible.builtin.git:
+    repo: "{{ torii_base_repo }}"
+    dest: /opt/torii-base-src
+    version: "{{ torii_base_version }}"
+    force: true
+    depth: 1
+  register: torii_base_git
+
+- name: Run torii-base bootstrap.sh
+  ansible.builtin.command:
+    cmd: >
+      bash /opt/torii-base-src/bootstrap.sh
+      --domain {{ torii_domain | quote }}
+      {{ '--email ' ~ (torii_letsencrypt_email | quote) if torii_use_letsencrypt else '--no-letsencrypt' }}
+    creates: /opt/torii/env
+  register: torii_bootstrap
+  changed_when: torii_bootstrap.rc == 0
+
+- name: Ensure torii-base-sidecar is enabled and running
+  ansible.builtin.systemd:
+    name: torii-base-sidecar
+    state: started
+    enabled: true
+
+- name: Wait for sidecar to answer /torii/healthz
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:8780/torii/healthz"
+    status_code: 200
+  register: sidecar_health
+  retries: 10
+  delay: 2
+  until: sidecar_health.status == 200
