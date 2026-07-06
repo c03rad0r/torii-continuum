@@ -1,72 +1,147 @@
 ---
-# Caddy role — install Caddy, deploy reverse proxy config
+# Caddy role — deploy reverse proxy config
+# Two modes: standalone (default) or docker_shared (inject into existing Docker Caddy)
 
-- name: Check if Caddy already installed
-  stat:
-    path: "{{ caddy_binary_path }}"
-  register: caddy_bin
-
-- name: Download and install Caddy
-  block:
-    - name: Download Caddy archive
-      get_url:
-        url: "{{ caddy_download_url }}"
-        dest: /tmp/caddy.tar.gz
-        timeout: 30
-
-    - name: Extract and install Caddy binary
-      shell: |
-        tar -xzf /tmp/caddy.tar.gz -C /tmp/ caddy
-        mv /tmp/caddy {{ caddy_binary_path }}
-        chmod 755 {{ caddy_binary_path }}
-      args:
-        creates: "{{ caddy_binary_path }}"
-  when: not caddy_bin.stat.exists
-
-- name: Verify Caddy version
-  command: "{{ caddy_binary_path }} version"
-  register: caddy_version_check
+# ─── Mode detection ────────────────────────────────────
+- name: Check for existing Docker Caddy container
+  shell: docker ps --format '{{ '{{' }} .Names {{ '}}' }}' | grep -i caddy || true
+  register: docker_caddy_check
   changed_when: false
 
-- name: Create Caddy system user
-  user:
-    name: "{{ caddy_user }}"
-    system: true
-    create_home: false
-    shell: /usr/sbin/nologin
+- name: Set caddy mode fact
+  set_fact:
+    caddy_use_docker_shared: "{{ caddy_docker_shared | default(false) or docker_caddy_check.stdout | length > 0 }}"
 
-- name: Create Caddy directories
-  file:
-    path: "{{ item }}"
-    state: directory
-    owner: "{{ caddy_user }}"
-    group: "{{ caddy_user }}"
-    mode: "0755"
-  loop:
-    - "{{ caddy_config_dir }}"
-    - "{{ caddy_data_dir }}"
+# ─── Docker shared mode ────────────────────────────────
+- name: Docker shared — find Caddyfile location
+  block:
+    - name: Ensure /srv/continuum exists
+      file:
+        path: /srv/continuum
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
 
-- name: Deploy Caddyfile
-  template:
-    src: Caddyfile.j2
-    dest: "{{ caddy_config_dir }}/Caddyfile"
-    owner: "{{ caddy_user }}"
-    group: "{{ caddy_user }}"
-    mode: "0644"
-  notify: reload caddy
+    - name: Get Docker Caddy mount info
+      shell: |
+        docker inspect $(docker ps --format '{{ '{{' }} .Names {{ '}}' }}' | grep -i caddy | head -1) \
+          --format '{{ '{{' }} range .Mounts {{ '}}' }}{{ '{{' }} .Source {{ '}}' }}:{{ '{{' }} .Destination {{ '}}' }}{{ '{{' }} end {{ '}}' }}'
+      register: caddy_mounts_raw
+      changed_when: false
 
-- name: Deploy Caddy systemd unit
-  template:
-    src: caddy.service.j2
-    dest: /etc/systemd/system/caddy.service
-    owner: root
-    group: root
-    mode: "0644"
-  notify: reload systemd
+    - name: Find Caddyfile in Docker mounts
+      set_fact:
+        docker_caddyfile: "{{ item.split(':')[0] }}"
+      when: "'Caddyfile' in item.split(':')[1] | default('')"
+      loop: "{{ caddy_mounts_raw.stdout.split('\n') }}"
 
-- name: Enable and start Caddy
-  systemd:
-    name: caddy
-    enabled: true
-    daemon_reload: true
-    state: started
+    - name: Copy frontend to Docker-accessible path
+      copy:
+        src: "{{ continuum_frontend_dir }}/dist/"
+        dest: "/srv/continuum/dist/"
+        owner: root
+        group: root
+        mode: "0644"
+        remote_src: true
+      notify: reload docker caddy
+
+    - name: Inject Continuum routes into Docker Caddyfile
+      blockinfile:
+        path: "{{ docker_caddyfile }}"
+        marker: "# {mark} CONTINUUM ROUTES (managed by Ansible)"
+        block: |
+          {{ continuum_agent_domain }} {
+              reverse_proxy 127.0.0.1:{{ continuum_port }}
+              header {
+                  X-Content-Type-Options "nosniff"
+                  X-Frame-Options "DENY"
+              }
+          }
+
+          {{ continuum_domain }} {
+              root * /srv/continuum/dist
+              file_server
+              try_files {path} /index.html
+              header {
+                  X-Content-Type-Options "nosniff"
+                  X-Frame-Options "DENY"
+              }
+          }
+      notify: reload docker caddy
+
+  when: caddy_use_docker_shared | bool
+
+# ─── Standalone mode ───────────────────────────────────
+- name: Standalone — install and configure Caddy
+  block:
+    - name: Check if Caddy already installed
+      stat:
+        path: "{{ caddy_binary_path }}"
+      register: caddy_bin
+
+    - name: Download and install Caddy
+      block:
+        - name: Download Caddy archive
+          get_url:
+            url: "{{ caddy_download_url }}"
+            dest: /tmp/caddy.tar.gz
+            timeout: 30
+
+        - name: Extract and install Caddy binary
+          shell: |
+            tar -xzf /tmp/caddy.tar.gz -C /tmp/ caddy
+            mv /tmp/caddy {{ caddy_binary_path }}
+            chmod 755 {{ caddy_binary_path }}
+          args:
+            creates: "{{ caddy_binary_path }}"
+      when: not caddy_bin.stat.exists
+
+    - name: Verify Caddy version
+      command: "{{ caddy_binary_path }} version"
+      register: caddy_version_check
+      changed_when: false
+
+    - name: Create Caddy system user
+      user:
+        name: "{{ caddy_user }}"
+        system: true
+        create_home: false
+        shell: /usr/sbin/nologin
+
+    - name: Create Caddy directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ caddy_user }}"
+        group: "{{ caddy_user }}"
+        mode: "0755"
+      loop:
+        - "{{ caddy_config_dir }}"
+        - "{{ caddy_data_dir }}"
+
+    - name: Deploy Caddyfile
+      template:
+        src: Caddyfile.j2
+        dest: "{{ caddy_config_dir }}/Caddyfile"
+        owner: "{{ caddy_user }}"
+        group: "{{ caddy_user }}"
+        mode: "0644"
+      notify: reload caddy
+
+    - name: Deploy Caddy systemd unit
+      template:
+        src: caddy.service.j2
+        dest: /etc/systemd/system/caddy.service
+        owner: root
+        group: root
+        mode: "0644"
+      notify: reload systemd
+
+    - name: Enable and start Caddy
+      systemd:
+        name: caddy
+        enabled: true
+        daemon_reload: true
+        state: started
+  when: not caddy_use_docker_shared | bool
