@@ -118,6 +118,8 @@ echo ""
 echo -e "${BOLD}Running Ansible playbook...${NC}"
 echo ""
 
+export ANSIBLE_CONFIG="${SCRIPT_DIR}/ansible/ansible.cfg"
+
 ansible-playbook \
     -i "${SCRIPT_DIR}/ansible/inventory/hosts.yml" \
     "${SCRIPT_DIR}/ansible/playbooks/deploy.yml" \
