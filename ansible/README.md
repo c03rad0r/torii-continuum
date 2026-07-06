@@ -27,18 +27,27 @@ ansible-playbook ansible/playbooks/deploy.yml
 
 ## Identity Management
 
-The ansible playbook **automatically generates** a Nostr keypair (npub/nsec)
-and a session secret on first deploy. These are saved to
-`/home/continuum/agent/identity/` on the VPS:
+The deployer **must provide** their Nostr npub (public key) at install time.
+This npub becomes the sole admin identity — only it can access admin
+controls. No nsec ever touches the VPS.
 
 | File | Contents | Mode |
 |------|----------|------|
-| `secret.key` | Operator nsec (import into Plebeian Signer) | 0600 |
-| `public.key` | Operator npub (safe to share) | 0644 |
-| `session_secret` | Agent session HMAC key (64 hex chars) | 0600 |
+| `admin.npub` | Admin's public npub (safe to share) | 0644 |
+| `session_secret` | Agent session HMAC key (64 hex chars, internal) | 0600 |
 
-The first run prints the generated identity — **save the nsec immediately**.
-If you lose it, you can recover from the VPS filesystem (ssh in and read it).
+Set your npub before running the playbook:
+
+```bash
+export CONTINUUM_ADMIN_NPUB="npub1..."
+```
+
+Get your npub from [Plebeian Signer](https://addons.mozilla.org/en-US/firefox/addon/plebeian-signer/)
+or any NIP-07 signer extension.
+
+To change admin after deployment, edit `config.yaml` on the VPS and restart
+the agent. See [docs/ADMIN-AUTH-DESIGN.md](../docs/ADMIN-AUTH-DESIGN.md)
+for the full design.
 
 ## Playbooks
 
@@ -63,9 +72,8 @@ environment variables (prefixed with `CONTINUUM_`) before running ansible:
 | `BASE_DOMAIN` | `example.com` | Root domain |
 | `CONTINUUM_DOMAIN` | `continuum.<base>` | Frontend URL |
 | `CONTINUUM_AGENT_DOMAIN` | `agent.<base>` | Agent API URL |
-| `CONTINUUM_ADMIN_NPUB` | auto-generated | Skip key generation, use this npub |
-| `CONTINUUM_ADMIN_NSEC` | auto-generated | Skip key generation, use this nsec |
-| `CONTINUUM_SESSION_SECRET` | auto-generated | Skip session secret generation |
+| `CONTINUUM_ADMIN_NPUB` | **(required)** | Admin's Nostr public key |
+| `CONTINUUM_SESSION_SECRET` | auto-generated | Override session HMAC key |
 | `CLOUDFLARE_API_TOKEN` | (optional) | Auto-configure DNS |
 | `ACME_EMAIL` | `admin@<domain>` | Let's Encrypt notification email |
 
