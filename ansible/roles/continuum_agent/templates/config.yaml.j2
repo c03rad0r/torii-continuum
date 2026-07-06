@@ -1,6 +1,6 @@
 ---
 # config.yaml.j2 — Continuum agent configuration template
-# Rendered by Ansible. Secrets come from identity role facts.
+# Rendered by Ansible. Synced to upstream config.example.yaml v0.2.6-alpha.
 
 admin_npub: "{{ continuum_admin_npub_resolved }}"
 
@@ -13,6 +13,7 @@ server:
   cors_origins:
     - "https://{{ continuum_domain }}"
     - "http://localhost:5180"
+    - "http://127.0.0.1:5180"
 
 cashu:
   mints:
@@ -29,11 +30,33 @@ routstr:
     coding: "{{ continuum_routstr_models.coding }}"
     summarise: "{{ continuum_routstr_models.summarise }}"
     routing: "{{ continuum_routstr_models.routing }}"
+    embed: "auto"
   fallback:
     enabled: false
+    coding:
+      - "deepseek-coder-v2"
+      - "qwen-2.5-coder-32b"
+      - "qwen-2.5-coder-7b"
+    chat:
+      - "deepseek-chat-v3"
+      - "llama-3.1-70b-instruct"
+      - "llama-3.1-8b-instruct"
   limits:
     max_tokens_out: {{ continuum_routstr_limits.max_tokens_out }}
     max_sats_per_request: {{ continuum_routstr_limits.max_sats_per_request }}
+
+ollama:
+  enabled: {{ continuum_ollama_enabled }}
+  endpoint: "{{ continuum_ollama_endpoint }}"
+  model: "{{ continuum_ollama_model }}"
+  models:
+    chat: "{{ continuum_ollama_models.chat }}"
+    reflect: "{{ continuum_ollama_models.reflect }}"
+  temperature: 0.4
+  timeout_ms: 60000
+
+model_router:
+  strategy: "{{ continuum_model_router_strategy }}"
 
 skills:
   chat:

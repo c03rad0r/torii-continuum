@@ -244,6 +244,25 @@ continuum_routstr_models:
   coding: "qwen-2.5-coder-32b"
 ```
 
+### Enable Ollama local fallback (v0.2.6-alpha)
+
+Ollama provides free local LLM inference as a fallback when the Cashu wallet
+is empty or Routstr is unreachable. Disabled by default.
+
+1. Install Ollama on the VPS:
+```bash
+ssh root@<VPS_IP> 'curl -fsSL https://ollama.com/install.sh | sh'
+ssh root@<VPS_IP> 'systemctl edit ollama.service'
+# Add: [Service] Environment="OLLAMA_HOST=127.0.0.1:11434"
+ssh root@<VPS_IP> 'ollama pull llama3.2:3b'
+```
+
+2. Enable in ansible group_vars and re-deploy:
+```yaml
+continuum_ollama_enabled: true
+continuum_model_router_strategy: "routstr_first"  # or ollama_first, ollama_only
+```
+
 ---
 
 ## Backup
@@ -301,7 +320,23 @@ Common causes:
 
 ### Login fails
 
-- Ensure Plebeian Signer is installed and has a key
+**Most common cause: npub mismatch.** The npub in `config.yaml` MUST match the key in your Plebeian Signer. If you deployed with someone else's npub, only they can log in.
+
+```bash
+# Check what npub the agent expects:
+ssh root@<VPS_IP> grep admin_npub /home/continuum/agent/repo/agent/config.yaml
+```
+
+If it doesn't match your Plebeian Signer key, fix it:
+```bash
+ssh root@<VPS_IP>
+nano /home/continuum/agent/repo/agent/config.yaml
+# Change admin_npub to YOUR npub (from Plebeian Signer)
+systemctl restart continuum-agent
+```
+
+Other causes:
+- Plebeian Signer not installed or no key configured
 - Check the browser console for NIP-07 errors
 - Verify the agent is running: `curl https://agent.<domain>/api/health`
 - Verify CORS: the agent config must list the frontend domain

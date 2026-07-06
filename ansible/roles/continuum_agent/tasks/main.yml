@@ -37,6 +37,7 @@
     - memory
     - memory/wallet
     - pending
+    - ciphertexts
 
 - name: Render config.yaml
   template:
