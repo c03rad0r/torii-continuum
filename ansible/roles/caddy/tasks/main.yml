@@ -23,18 +23,22 @@
         group: root
         mode: "0755"
 
-    - name: Get Docker Caddy mount info
+    - name: Find Docker Caddyfile on host
       shell: |
-        docker inspect $(docker ps --format '{{ '{{' }} .Names {{ '}}' }}' | grep -i caddy | head -1) \
-          --format '{{ '{{' }} range .Mounts {{ '}}' }}{{ '{{' }} .Source {{ '}}' }}:{{ '{{' }} .Destination {{ '}}' }}{{ '{{' }} end {{ '}}' }}'
-      register: caddy_mounts_raw
+        for path in /opt/tollgate/caddy/Caddyfile /etc/caddy/Caddyfile /srv/caddy/Caddyfile; do
+          if [ -f "$path" ]; then
+            echo "$path"
+            exit 0
+          fi
+        done
+        # Fallback: search for it
+        find /opt /etc /srv -name Caddyfile -type f 2>/dev/null | head -1
+      register: caddyfile_search
       changed_when: false
 
-    - name: Find Caddyfile in Docker mounts
+    - name: Set Docker Caddyfile path
       set_fact:
-        docker_caddyfile: "{{ item.split(':')[0] }}"
-      when: "'Caddyfile' in item.split(':')[1] | default('')"
-      loop: "{{ caddy_mounts_raw.stdout.split('\n') }}"
+        docker_caddyfile: "{{ caddyfile_search.stdout | trim }}"
 
     - name: Copy frontend to Docker-accessible path
       copy:
