@@ -1,0 +1,998 @@
+{
+  "config": {
+    "argv": [
+      "/usr/bin/node",
+      "/home/c03rad0r/repos/torii-continuum/tests/playwright/node_modules/.bin/playwright",
+      "test"
+    ],
+    "configFile": "/home/c03rad0r/repos/torii-continuum/tests/playwright/playwright.config.ts",
+    "rootDir": "/home/c03rad0r/repos/torii-continuum/tests/playwright",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/c03rad0r/repos/torii-continuum/tests/playwright",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.61.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "agent-api.spec.ts",
+      "file": "agent-api.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Continuum Agent API",
+          "file": "agent-api.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
+            {
+              "title": "GET /api/health returns ok",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 674,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "  Agent version: 0.2.5-alpha, memory: false\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:43:11.372Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7235d3f245c932002f94-594dd1a0b72ab664a355",
+              "file": "agent-api.spec.ts",
+              "line": 7,
+              "column": 7
+            },
+            {
+              "title": "POST /api/auth/challenge returns challenge token",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 228,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "  Challenge: 11cec6deb58feecc831f...\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:43:12.107Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7235d3f245c932002f94-0ca0d74431def7328442",
+              "file": "agent-api.spec.ts",
+              "line": 18,
+              "column": 7
+            },
+            {
+              "title": "GET /api/wallet/balance returns 401 without auth",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 217,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:43:12.357Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7235d3f245c932002f94-a1ab35a92abfacbcc34c",
+              "file": "agent-api.spec.ts",
+              "line": 29,
+              "column": 7
+            },
+            {
+              "title": "POST /api/chat returns 401 without auth",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 223,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:43:12.600Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7235d3f245c932002f94-950f666805caa05f58f7",
+              "file": "agent-api.spec.ts",
+              "line": 34,
+              "column": 7
+            },
+            {
+              "title": "POST /api/chat returns 401 with empty message (auth check runs before body validation)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 196,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:43:12.851Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7235d3f245c932002f94-0d080ea9696a687d8243",
+              "file": "agent-api.spec.ts",
+              "line": 41,
+              "column": 7
+            },
+            {
+              "title": "Character endpoint returns 401 without auth",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 200,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:43:13.070Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "7235d3f245c932002f94-8cc363b96e9e6cf1699f",
+              "file": "agent-api.spec.ts",
+              "line": 48,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "happy-path.spec.ts",
+      "file": "happy-path.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Continuum SPA — Happy Path",
+          "file": "happy-path.spec.ts",
+          "line": 6,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Agent is reachable from frontend context",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 548,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:43:13.328Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-e82d3-hable-from-frontend-context-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-e82d3-hable-from-frontend-context-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "193f4027a814d80785cd-61c6a63b161d32a05bc8",
+              "file": "happy-path.spec.ts",
+              "line": 8,
+              "column": 7
+            },
+            {
+              "title": "Landing page loads with core branding",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4467,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:43:13.979Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-8dd9f-ge-loads-with-core-branding-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-8dd9f-ge-loads-with-core-branding-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "193f4027a814d80785cd-8d7a270e88f98a7fd201",
+              "file": "happy-path.spec.ts",
+              "line": 15,
+              "column": 7
+            },
+            {
+              "title": "Landing page has Torii SVG gate",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3646,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:43:18.466Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-aff8f-ing-page-has-Torii-SVG-gate-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-aff8f-ing-page-has-Torii-SVG-gate-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "193f4027a814d80785cd-b04160f066e5aa62aa64",
+              "file": "happy-path.spec.ts",
+              "line": 32,
+              "column": 7
+            },
+            {
+              "title": "Login button shows Nostr auth option",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4284,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:43:22.129Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-faa85-ton-shows-Nostr-auth-option-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-faa85-ton-shows-Nostr-auth-option-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "193f4027a814d80785cd-156607e02bba27511894",
+              "file": "happy-path.spec.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "Projects page shows seeded projects",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4638,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:43:26.437Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-f5a47--page-shows-seeded-projects-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-f5a47--page-shows-seeded-projects-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "193f4027a814d80785cd-d33816a3d36afac81b51",
+              "file": "happy-path.spec.ts",
+              "line": 52,
+              "column": 7
+            },
+            {
+              "title": "Projects page has \"New project\" flow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7346,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:43:31.099Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-fb790-s-page-has-New-project-flow-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-fb790-s-page-has-New-project-flow-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "193f4027a814d80785cd-dec2f8aa85cbded5fc25",
+              "file": "happy-path.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "Marketplace page shows tasks with sats bounties",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5080,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:43:38.468Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-87bd5-ws-tasks-with-sats-bounties-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-87bd5-ws-tasks-with-sats-bounties-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "193f4027a814d80785cd-3e0318af75c3640e3d07",
+              "file": "happy-path.spec.ts",
+              "line": 88,
+              "column": 7
+            },
+            {
+              "title": "Marketplace has filter/search bar",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4252,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:43:43.568Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-8e17f-place-has-filter-search-bar-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-8e17f-place-has-filter-search-bar-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "193f4027a814d80785cd-fe46ca3d7ecd3c8a3a5b",
+              "file": "happy-path.spec.ts",
+              "line": 108,
+              "column": 7
+            },
+            {
+              "title": "Routstr page shows model picker with DeepSeek default",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4790,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:43:47.842Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-c2e18-icker-with-DeepSeek-default-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-c2e18-icker-with-DeepSeek-default-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "193f4027a814d80785cd-b6a44dcd33b1493c17ab",
+              "file": "happy-path.spec.ts",
+              "line": 125,
+              "column": 7
+            },
+            {
+              "title": "Routstr shows connect wallet option",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4098,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:43:52.650Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-08b17-shows-connect-wallet-option-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-08b17-shows-connect-wallet-option-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "193f4027a814d80785cd-3488790ccf601e9d029d",
+              "file": "happy-path.spec.ts",
+              "line": 141,
+              "column": 7
+            },
+            {
+              "title": "Dashboard shows aggregate project stats",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4616,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:43:56.769Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-231f5-ows-aggregate-project-stats-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-231f5-ows-aggregate-project-stats-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "193f4027a814d80785cd-975c7028a37a57a5c018",
+              "file": "happy-path.spec.ts",
+              "line": 151,
+              "column": 7
+            },
+            {
+              "title": "Project detail page shows milestones and todos",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4705,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:44:01.406Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-03f0f--shows-milestones-and-todos-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-03f0f--shows-milestones-and-todos-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "193f4027a814d80785cd-9fb7b5c0cab7fce40f68",
+              "file": "happy-path.spec.ts",
+              "line": 168,
+              "column": 7
+            },
+            {
+              "title": "Torii Quest project detail shows game-specific data",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4674,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:44:06.137Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-ccdfe-il-shows-game-specific-data-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-ccdfe-il-shows-game-specific-data-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "193f4027a814d80785cd-d915e0e8b4e90cbe754b",
+              "file": "happy-path.spec.ts",
+              "line": 184,
+              "column": 7
+            },
+            {
+              "title": "Navigation via sidebar works to all views",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7671,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:44:10.827Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-1475b--sidebar-works-to-all-views-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-1475b--sidebar-works-to-all-views-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "193f4027a814d80785cd-0f7f7be13723c1c12fda",
+              "file": "happy-path.spec.ts",
+              "line": 196,
+              "column": 7
+            },
+            {
+              "title": "Sidebar has all 4 navigation entries on projects page",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4562,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-06T12:44:18.515Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-3c816-on-entries-on-projects-page-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/happy-path-Continuum-SPA-—-3c816-on-entries-on-projects-page-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "193f4027a814d80785cd-6d2b675c6aae514daabd",
+              "file": "happy-path.spec.ts",
+              "line": 226,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-07-06T12:43:10.372Z",
+    "duration": 72775.711,
+    "expected": 21,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
