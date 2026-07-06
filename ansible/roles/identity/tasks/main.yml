@@ -1,110 +1,61 @@
 ---
-# Identity role — generate Nostr keypair + session secret if not provided
+# Identity role — validate user-provided npub, generate session secret
+# The user provides their npub (from Plebeian Signer) at install time.
+# No nsec ever touches the VPS. No keypair generation.
 
-- name: Check for existing identity
-  stat:
-    path: "{{ continuum_identity_dir }}/secret.key"
-  register: existing_identity
+- name: Validate admin npub is provided
+  fail:
+    msg: >
+      CONTINUUM_ADMIN_NPUB is required. Set it before running the installer:
+        export CONTINUUM_ADMIN_NPUB="npub1..."
+      Get your npub from Plebeian Signer (or any NIP-07 signer extension).
+      If you don't have one yet, install Plebeian Signer first:
+        Firefox: https://addons.mozilla.org/en-US/firefox/addon/plebeian-signer/
+        Chrome:  https://chromewebstore.google.com/detail/ijbiankmnehjephbkfdgphckcdgbgoho
+  when: continuum_admin_npub | length == 0
 
-- name: Generate Nostr keypair (if not provided and not on disk)
-  block:
-    - name: Generate nsec via pynostr
-      shell: |
-        python3 -c "
-        from pynostr.key import PrivateKey
-        pk = PrivateKey()
-        print(pk.bech32())
-        "
-      register: generated_nsec
-      changed_when: false
+- name: Validate npub format
+  shell: |
+    python3 -c "
+    import sys
+    npub = '{{ continuum_admin_npub }}'
+    if not npub.startswith('npub1'):
+        print('ERROR: must start with npub1', file=sys.stderr)
+        sys.exit(1)
+    if len(npub) < 60 or len(npub) > 65:
+        print('ERROR: npub should be 60-65 chars, got ' + str(len(npub)), file=sys.stderr)
+        sys.exit(1)
+    print('valid')
+    "
+  register: npub_validation
+  changed_when: false
+  failed_when: npub_validation.stdout != 'valid'
 
-    - name: Derive npub from generated nsec
-      shell: |
-        python3 -c "
-        from pynostr.key import PrivateKey
-        pk = PrivateKey('{{ generated_nsec.stdout }}')
-        print(pk.public_key.bech32())
-        "
-      register: generated_npub
-      changed_when: false
+- name: Set admin npub fact
+  set_fact:
+    continuum_admin_npub_resolved: "{{ continuum_admin_npub }}"
 
-    - name: Set identity facts
-      set_fact:
-        continuum_admin_nsec_resolved: "{{ generated_nsec.stdout }}"
-        continuum_admin_npub_resolved: "{{ generated_npub.stdout }}"
-  when: >
-    not existing_identity.stat.exists and
-    continuum_admin_nsec | length == 0
-
-- name: Use provided nsec (derive npub)
-  block:
-    - name: Derive npub from provided nsec
-      shell: |
-        python3 -c "
-        from pynostr.key import PrivateKey
-        pk = PrivateKey('{{ continuum_admin_nsec }}')
-        print(pk.public_key.bech32())
-        "
-      register: provided_npub
-      changed_when: false
-
-    - name: Set identity facts from provided key
-      set_fact:
-        continuum_admin_nsec_resolved: "{{ continuum_admin_nsec }}"
-        continuum_admin_npub_resolved: "{{ provided_npub.stdout }}"
-  when: >
-    not existing_identity.stat.exists and
-    continuum_admin_nsec | length > 0
-
-- name: Load existing identity from disk
-  block:
-    - name: Read existing nsec
-      slurp:
-        src: "{{ continuum_identity_dir }}/secret.key"
-      register: existing_nsec_raw
-
-    - name: Set identity facts from disk
-      set_fact:
-        continuum_admin_nsec_resolved: "{{ existing_nsec_raw.content | b64decode | trim }}"
-
-    - name: Derive npub from stored nsec
-      shell: |
-        python3 -c "
-        from pynostr.key import PrivateKey
-        pk = PrivateKey('{{ continuum_admin_nsec_resolved }}')
-        print(pk.public_key.bech32())
-        "
-      register: stored_npub
-      changed_when: false
-
-    - name: Set npub from stored key
-      set_fact:
-        continuum_admin_npub_resolved: "{{ stored_npub.stdout }}"
-  when: existing_identity.stat.exists
-
-- name: Generate session secret (if not provided)
+- name: Generate session secret (always auto-generated, internal use)
   shell: "python3 -c \"import secrets; print(secrets.token_hex(32))\""
   register: generated_session_secret
   changed_when: false
-  when: continuum_session_secret | length == 0
 
 - name: Set session secret fact
   set_fact:
-    continuum_session_secret_resolved: "{{ continuum_session_secret if continuum_session_secret | length > 0 else generated_session_secret.stdout }}"
+    continuum_session_secret_resolved: "{{ generated_session_secret.stdout }}"
 
-- name: Save nsec to disk (mode 0600)
-  copy:
-    content: "{{ continuum_admin_nsec_resolved }}"
-    dest: "{{ continuum_identity_dir }}/secret.key"
+- name: Create identity directory
+  file:
+    path: "{{ continuum_identity_dir }}"
+    state: directory
     owner: "{{ continuum_user }}"
     group: "{{ continuum_user }}"
-    mode: "0600"
-  when: not existing_identity.stat.exists
+    mode: "0700"
 
-- name: Save npub to disk
+- name: Save npub to disk (public key only — no secret material)
   copy:
     content: "{{ continuum_admin_npub_resolved }}"
-    dest: "{{ continuum_identity_dir }}/public.key"
+    dest: "{{ continuum_identity_dir }}/admin.npub"
     owner: "{{ continuum_user }}"
     group: "{{ continuum_user }}"
     mode: "0644"
@@ -117,18 +68,15 @@
     group: "{{ continuum_user }}"
     mode: "0600"
 
-- name: Display generated identity (ONE-TIME)
+- name: Display install summary
   debug:
     msg:
       - "========================================================"
-      - "  CONTINUUM IDENTITY GENERATED — SAVE THIS INFORMATION"
+      - "  CONTINUUM IDENTITY CONFIGURED"
       - "========================================================"
       - "Admin npub: {{ continuum_admin_npub_resolved }}"
-      - "Admin nsec: {{ continuum_admin_nsec_resolved }}"
       - ""
-      - "  ⚠️  The nsec above is your operator private key."
-      - "  Import it into Plebeian Signer (or your NIP-07 signer)."
-      - "  It is stored at: {{ continuum_identity_dir }}/secret.key"
-      - "  NEVER share it. NEVER commit it."
+      - "  Only this npub can log in (via Plebeian Signer)."
+      - "  No nsec on this server — signing happens in browser."
+      - "  To change admin: edit config.yaml admin_npub + restart."
       - "========================================================"
-  when: not existing_identity.stat.exists
