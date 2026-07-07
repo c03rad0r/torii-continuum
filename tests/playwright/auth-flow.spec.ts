@@ -131,18 +131,22 @@ test.describe('X — NIP-07 Login Flow', () => {
   });
 
   test('X02: Login with NIP-07 stub completes full flow', async ({ page }) => {
-    // Inject window.nostr and intercept API calls
+    // Inject window.nostr — matches the API that nos2x-fox, Plebeian Signer,
+    // and all NIP-07 extensions provide
     await page.addInitScript(() => {
       (window as any).nostr = {
+        getPublicKey: async () => '00'.repeat(16),
         signEvent: async (event: any) => ({
           ...event,
           id: '00'.repeat(16),
           pubkey: '00'.repeat(16),
           sig: '00'.repeat(32),
         }),
+        getRelays: async () => ({
+          'wss://relay.ngit.dev': { read: true, write: true },
+        }),
       };
     });
-
     // Intercept auth verify to return a real token
     await page.route(`${AGENT}/api/auth/verify`, async (route) => {
       await route.fulfill({
