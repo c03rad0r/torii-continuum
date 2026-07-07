@@ -66,18 +66,15 @@ test.describe('AA — Data Layer', () => {
 
   test('AA01: slugify converts spaces to hyphens and lowercases', async ({ page }) => {
     await go(page, '/projects');
-    const slug = await page.evaluate(() => {
-      // Access the store's slugify via a test project create
-      const btn = document.querySelector('button:has-text("New project")') as HTMLButtonElement;
-      if (!btn) return null;
-      btn.click();
-      return 'modal-opened';
-    });
-    expect(slug).toBeTruthy();
+    // Click New project button using Playwright locator (not evaluate)
+    const newBtn = page.locator('button').filter({ hasText: 'New project' }).first();
+    await expect(newBtn).toBeVisible({ timeout: 5000 });
+    await newBtn.click();
+    await page.waitForTimeout(500);
     // Create a project with spaces and check URL slug
     const nameInput = page.locator('.modal input[type="text"]').first();
     await nameInput.fill('  My   Test   Project  ');
-    const createBtn = page.locator('.modal button.primary, button:has-text("Create")').last();
+    const createBtn = page.locator('.modal button.primary, button').filter({ hasText: 'Create' }).last();
     await createBtn.click();
     await page.waitForTimeout(500);
     // Slug should be 'my-test-project' (spaces collapsed, trimmed, lowered)
