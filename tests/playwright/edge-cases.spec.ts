@@ -191,16 +191,17 @@ test.describe('O — Projects Validation', () => {
     // Click GitHub tab — this makes repo input visible
     await page.locator('.tab:has-text("GitHub")').click();
     await page.waitForTimeout(500);
-    // After clicking GitHub tab, the repoRow becomes visible.
-    // The repo input is the text input whose parent is a form-row that was just made visible.
-    const repoInput = page.locator('.form-row[style*="flex"] input[type="text"], .form-row:not([style*="none"]) input[type="text"]');
+    // Find the repo input by its GitHub-specific placeholder
+    const repoInput = page.getByPlaceholder('https://github.com/user/repo');
+    await expect(repoInput).toBeVisible({ timeout: 3000 });
     const placeholder = await repoInput.getAttribute('placeholder');
     expect(placeholder).toContain('github.com');
 
     // Click ngit tab
     await page.locator('.tab:has-text("ngit")').click();
     await page.waitForTimeout(300);
-    const ngitPlaceholder = await repoInput.getAttribute('placeholder');
+    const ngitInput = page.getByPlaceholder(/ngit:\/\//);
+    const ngitPlaceholder = await ngitInput.getAttribute('placeholder');
     expect(ngitPlaceholder).toContain('ngit://');
   });
 
