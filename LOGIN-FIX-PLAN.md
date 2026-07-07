@@ -1,140 +1,237 @@
-# Login Error Fix Plan — "Could not reach agent: Bad Request"
+# Login Fix Plan — Root Cause Analysis
+
+## The Problem
+
+When clicking "Login with Nostr" on Continuum, the error appears:
+
+> **Could not reach agent: Bad Request**
+
+This happens before the NIP-07 signer is even invoked.
 
 ## Root Cause
 
-The frontend HTTP client (`src/data/agent.js`) unconditionally sets `Content-Type: application/json` on every request. When `requestChallenge()` calls `req('POST', '/api/auth/challenge')` with no body, the browser sends an empty request body with `Content-Type: application/json`. The agent's Fastify server rejects this with:
+**Fastify (the agent's HTTP server) rejects POST requests that set `Content-Type: application/json` but have an empty body.**
 
-```json
-{"statusCode":400,"code":"FST_ERR_CTP_EMPTY_JSON_BODY","error":"Bad Request",
- "message":"Body cannot be empty when content-type is set to 'application/json'"}
+The error message from the server is:
+```
+FST_ERR_CTP_EMPTY_JSON_BODY: Body cannot be empty when content-type is set to 'application/json'
 ```
 
-The frontend then displays: **"Could not reach agent: Bad Request"**
+### Trace
 
-## Fix (Already Applied in Repo)
-
-`src/data/agent.js` lines 63-71 — only set `Content-Type` when there is a body:
+1. User clicks Login → `startLogin()` in `src/auth.js`
+2. → `requestChallenge()` in `src/data/agent.js`
+3. → `req('POST', '/api/auth/challenge')` — sends POST with no body
+4. The `req()` function always sets `Content-Type: application/json`:
 
 ```js
-// OLD (bug):
-const headers = {'Content-Type': 'application/json'};
+const headers = { 'Content-Type': 'application/json' };
+// ...
+res = await fetch(url, {
+  method,
+  headers,
+  body: body ? JSON.stringify(body) : undefined,
+  credentials: 'include',
+});
+```
 
-// NEW (fix):
-const headers = {};
-// ... later, only when body is present:
-if (body !== undefined && body !== null) {
-  bodyStr = JSON.stringify(body);
-  headers['Content-Type'] = 'application/json';
+5. Fastify sees `Content-Type: application/json` with zero bytes of body → returns 400
+6. The frontend catches `!res.ok` and returns `{ ok: false, reason: "http 400" }`
+7. `startLogin()` shows: "Could not reach agent: Bad Request"
+
+### Verification
+
+```
+$ curl -X POST -H "Content-Type: application/json" https://agent-test.orangesync.tech/api/auth/challenge
+→ 400 FST_ERR_CTP_EMPTY_JSON_BODY
+
+$ curl -X POST -H "Content-Type: application/json" -d '{}' https://agent-test.orangesync.tech/api/auth/challenge
+→ 200 { challenge: "4a52b419...", expires_in: 300, kind: 22242 }
+```
+
+## Fix Options
+
+### Option A — Frontend fix (recommended)
+
+**File:** `src/data/agent.js`
+
+**Change:** Only set `Content-Type: application/json` when there's a body.
+
+```diff
+-  const headers = { 'Content-Type': 'application/json' };
++  const headers = {};
+   const tok = getStoredToken();
+   if (tok) headers.Authorization = `Bearer ${tok}`;
++  if (body) headers['Content-Type'] = 'application/json';
+```
+
+**Why this is safe:** The challenge endpoint (and any other GET endpoint) doesn't need a content-type header because there's no body. Fastify only enforces this check when the header is present. All POST endpoints that actually receive a body (chat, verify, wallet/receive, etc.) pass `body` to `req()` so they'll still get the header.
+
+**Files affected:** 1 file, 2 lines changed.
+
+**Test coverage affected:** None — existing tests pass because the Playwright API tests use the `request` fixture directly, not the frontend's `req()` function.
+
+### Option B — Agent fix (alternative)
+
+**File:** `agent/index.mjs`
+
+**Change:** Disable Fastify's empty-body check for the challenge route:
+
+```javascript
+app.post('/api/auth/challenge', {
+  config: { rawBody: true },
+}, async (req, reply) => {
+  const clientIp = req.ip;
+  const { challenge, expires_in } = auth.issueChallenge(clientIp);
+  return { challenge, expires_in, kind: 22242 };
+});
+```
+
+Or use Fastify's `addContentTypeParser` to accept empty JSON bodies globally:
+```javascript
+app.addContentTypeParser('application/json', { parseAs: 'string' }, (req, body, done) => {
+  try {
+    done(null, body ? JSON.parse(body) : {});
+  } catch (err) {
+    done(err);
+  }
+});
+```
+
+**Why Option A is better:** The frontend is sending semantically incorrect headers. Fix the sender, not the receiver.
+
+## Secondary Issues
+
+### 1. Admin npub mismatch
+
+Even after fixing the challenge error, login will fail because the agent's `admin_npub` doesn't match the user's nos2x-fox key.
+
+**Current admin_npub on VPS2:**
+```
+npub12s9z9jl99af97v3k8dchq64ellzzsgvly3hv9y453x56ghg074cspcafva
+```
+This is a throwaway test key generated for automated Playwright tests.
+
+**Fix:** Replace with Amperstrand's actual npub from their nos2x-fox extension.
+
+**How to get the npub:** In nos2x-fox, open the extension popup — it shows the public key (npub). Or from any Nostr client, check the public key in profile settings.
+
+### 2. nos2x-fox Compatibility
+
+**nos2x-fox** (github.com/diegogurpegui/nos2x-fox) is a Firefox port of nos2x (NIP-07 extension). It exposes:
+
+- `window.nostr.getPublicKey()` → returns hex pubkey
+- `window.nostr.signEvent(event)` → signs a Nostr event and returns it with `id` and `sig`
+
+**Continuum's auth flow uses:**
+- `window.nostr.signEvent(event)` → ✅ Same interface
+- `typeof window.nostr.signEvent === 'function'` → ✅ Same check
+
+**Should work out of the box.** The `hasSigner()` check in `src/auth.js` is:
+```js
+function hasSigner() {
+  return typeof window !== 'undefined' && window.nostr && typeof window.nostr.signEvent === 'function';
 }
 ```
+Both nos2x-fox and Plebeian Signer implement this same NIP-07 interface.
 
-This fix is already committed on the `feat/ansible-one-click-deploy` branch. It must be deployed.
+### 3. CORS Configuration
 
----
-
-## Task 1: Deploy the Frontend Fix to VPS1
-
-### What
-Rebuild and deploy the Continuum frontend on VPS1 with the fixed `agent.js`.
-
-### Steps
-1. SSH into VPS1 (`66.92.204.38`, user `debian`)
-2. Clone/pull the latest repo with the fix
-3. Install dependencies: `npm ci`
-4. Build frontend: `VITE_AGENT_URL=https://agent.orangesync.tech npm run build`
-5. Copy built assets to the Caddy serve directory
-6. Reload Caddy if needed
-7. Verify: visit `https://continuum.orangesync.tech`, click "Login" — should no longer show "Bad Request"
-
-### Verification
-```bash
-curl -s -X POST -H "Content-Type: application/json" \
-  https://agent.orangesync.tech/api/auth/challenge
-```
-Should return 400 with "Bad Request" if hitting the OLD code.
-Should return 200 with `{challenge, expires_in, kind}` if fixed (because browser no longer sends Content-Type with empty body).
-
-### Rollback
-If the fix causes issues, revert to the previous bundle.
-
----
-
-## Task 2: Verify CORS Configuration on VPS1
-
-### What
-The agent's `config.yaml` must include `https://continuum.orangesync.tech` in its CORS allowlist. If missing, the browser blocks the login request with a CORS error instead of "Bad Request".
-
-### Steps
-1. SSH into VPS1
-2. Read `/home/continuum/agent/repo/agent/config.yaml`
-3. Check `server.cors_origins` contains `https://continuum.orangesync.tech`
-4. If missing, add it and restart the agent: `sudo systemctl restart continuum-agent`
-
-### Verification
-```bash
-curl -s -X OPTIONS -H "Origin: https://continuum.orangesync.tech" \
-  -H "Access-Control-Request-Method: POST" \
-  https://agent.orangesync.tech/api/auth/challenge -D - | grep access-control-allow-origin
-# Expected: access-control-allow-origin: https://continuum.orangesync.tech
+The agent's CORS config must include the frontend origin. Current config on VPS2:
+```yaml
+cors_origins:
+  - "https://continuum-test.orangesync.tech"
+  - "http://localhost:5180"
 ```
 
----
+If the user is accessing from `continuum.orangesync.tech` (VPS1), the VPS1 agent config also needs to include that origin. This is already set up correctly on VPS2.
 
-## Task 3: Add CORS Support for Firefox NIP-07 Extensions (nos2x-fox)
+## Implementation Steps
 
-### What
-The user has **nos2x-fox** (a Firefox NIP-07 extension by diegogurpegui) instead of Plebeian Signer. The NIP-07 interface is standardized — both expose `window.nostr.signEvent`. No code changes needed for compatibility.
+### Step 1: Fix the frontend bug
 
-However, Firefox handles CORS and `credentials: 'include'` slightly differently than Chrome. Ensure:
-- The agent config includes `https://continuum.orangesync.tech` in `cors_origins`
-- The server sets `credentials: true` (it already does — line 54 of agent/index.mjs)
-- The `Vary: Origin` header is present (Caddy adds this automatically)
+**File:** `src/data/agent.js`
+**Change:** 1 line (conditionally set Content-Type header)
+**Commit message:** `fix: don't send Content-Type: application/json for bodyless requests`
 
-### Steps
-1. Verify the agent CORS config includes the frontend origin
-2. Test login from Firefox with nos2x-fox installed
-3. If login fails with a CORS error, add `Access-Control-Allow-Origin` specific handling
-
-### Verification
-1. Install nos2x-fox in Firefox
-2. Configure it with the same npub as `admin_npub` in the agent config
-3. Visit `https://continuum.orangesync.tech`
-4. Click "Login" — should show the NIP-07 signer challenge
-5. nos2x-fox should prompt to sign the challenge
-6. After signing, the page should show "Sign out" button
-
----
-
-## Task 4: Add Playwright Test for Login Error Handling
-
-### What
-Add a test that verifies the frontend shows the correct error when the agent returns "Bad Request", and that the fix prevents this error.
-
-### Steps
-1. Write Playwright test that:
-   - Sets `window.__CONTINUUM_AGENT_URL__` to a URL that returns 400
-   - Clicks Login
-   - Verifies the error message is NOT shown
-2. Write Playwright test that:
-   - Logs in via the programmatic NIP-42 flow
-   - Verifies the session button says "Sign out"
-   - This proves the fixed code works
-
-### Verification
-```bash
-npx playwright test auth-tests.spec.ts --config playwright.config.ts --grep "X01"
-# Should pass - session button shows "Sign out"
+**Before:**
+```js
+const headers = { 'Content-Type': 'application/json' };
 ```
 
----
+**After:**
+```js
+const headers = {};
+if (body) headers['Content-Type'] = 'application/json';
+```
 
-## Summary
+### Step 2: Get Amperstrand's npub
 
-| Task | Priority | Effort | Dependency | Status |
-|------|----------|--------|------------|--------|
-| **1. Deploy frontend fix to VPS1** | 🔴 Critical | 30 min | SSH access to VPS1 | **Not done** |
-| **2. Verify CORS config on VPS1** | 🔴 Critical | 15 min | SSH access to VPS1 | **Not done** |
-| **3. Verify nos2x-fox works** | 🟡 Medium | 1 hour | User's Firefox browser | **Not done** |
-| **4. Add Playwright error-handling test** | 🟢 Low | 1 hour | Nothing | **Not done** |
+Ask Amperstrand to open their nos2x-fox extension and read the public key (npub). Format: `npub1...`
 
-The fix is already committed in the repo. What's needed is deployment to production.
+Alternatively, they can run this in the browser console:
+```js
+window.nostr.getPublicKey().then(hex => console.log('hex:', hex))
+```
+
+Then convert hex to npub:
+```python
+CHARSET = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l'
+def bech32_encode(hrp, data):
+    # ... standard bech32 encoding
+```
+
+### Step 3: Update admin_npub
+
+SSH into the VPS and update config.yaml:
+
+```bash
+sudo sed -i 's/admin_npub:.*/admin_npub: "npub1AMPERSTRANDS_NPUB"/' /home/continuum/agent/repo/agent/config.yaml
+sudo systemctl restart continuum-agent
+```
+
+Or for VPS1:
+```bash
+sudo sed -i 's/admin_npub:.*/admin_npub: "npub1AMPERSTRANDS_NPUB"/' /path/to/config.yaml
+sudo systemctl restart continuum
+```
+
+### Step 4: Verify login flow
+
+After both fixes are deployed:
+
+1. Visit Continuum in a browser with nos2x-fox installed
+2. Click Login
+3. nos2x-fox should prompt to sign the challenge
+4. After signing, the session token is stored
+5. UI should switch to logged-in state (button says "Sign out")
+
+### Step 5: Run Playwright tests
+
+Run the full test suite to verify nothing broke:
+
+```bash
+cd tests/playwright
+npx playwright test --config playwright.config.ts
+```
+
+The auth tests (`auth-tests.spec.ts`) will still work because they use `nostr-tools` directly (bypassing the frontend's `req()` function), so the Content-Type change doesn't affect them.
+
+## Rollback Plan
+
+If the fix causes issues:
+1. Revert the commit: `git revert HEAD`
+2. Restore the original admin_npub from git history
+3. Push to the PR branch
+
+## Verification Checklist
+
+- [ ] Challenge endpoint returns 200 when called with empty JSON body `{}`
+- [ ] Challenge endpoint returns 400 when called with Content-Type: application/json and no body (expected — Fastify behaviour, but frontend no longer does this)
+- [ ] Login with nos2x-fox prompts for signature
+- [ ] After signing, session token is stored in localStorage
+- [ ] UI reflects logged-in state (button shows "Sign out")
+- [ ] Logout works correctly
+- [ ] Wallet balance endpoint returns data when authenticated
+- [ ] Chat endpoint works when authenticated
+- [ ] All 180 existing Playwright tests still pass
