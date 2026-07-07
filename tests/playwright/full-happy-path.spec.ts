@@ -234,19 +234,19 @@ test.describe('Projects View', () => {
   test('new project modal opens', async ({ page }) => {
     await navigateAndWait(page, '/projects');
     await page.waitForTimeout(1000);
-    // Click "New project" button
-    const newBtn = page.getByText(/new project/i);
+    // Click "+ New project" button (avoid ambiguity with add-card div)
+    const newBtn = page.locator('button.primary:has-text("+ New project"), button:has-text("New project")');
     await expect(newBtn).toBeVisible({ timeout: 5000 });
     await newBtn.click();
     await page.waitForTimeout(500);
     // Modal should appear
-    await expect(page.locator('.modal-backdrop, [class*="modal"]').first()).toBeVisible({ timeout: 3000 });
+    await expect(page.locator('.modal-backdrop').first()).toBeVisible({ timeout: 3000 });
   });
 
   test('create blank project', async ({ page }) => {
     await navigateAndWait(page, '/projects');
     await page.waitForTimeout(1000);
-    await page.getByText(/new project/i).click();
+    await page.locator('button.primary:has-text("+ New project"), button:has-text("New project")').click();
     await page.waitForTimeout(500);
     // Fill in project name
     await page.fill('input[type="text"]', 'Test Project Alpha');
@@ -434,10 +434,11 @@ test.describe('Dashboard View', () => {
 
   test('project row navigates to project detail', async ({ page }) => {
     await navigateAndWait(page, '/dashboard');
-    await page.waitForTimeout(1000);
-    const projectLink = page.getByText(/torii-quest|continuum/i).first();
-    if (await projectLink.isVisible({ timeout: 3000 })) {
-      await projectLink.click();
+    await page.waitForTimeout(1500);
+    // Click the first project row in the "By project" section
+    const projectRows = page.locator('.session[role="button"]');
+    if (await projectRows.count() > 0) {
+      await projectRows.first().click();
       await page.waitForTimeout(1000);
       // Should navigate somewhere meaningful
       expect(page.url()).toContain('/projects/');
