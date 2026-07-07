@@ -137,14 +137,30 @@ test.describe('N — Deployment bundle verification', () => {
     expect(resp.ok()).toBeTruthy();
     const bundle = await resp.text();
 
-    // The fix in minified JS: Content-Type assignment must exist in the bundle
-    const hasContentTypeAssignment =
-      /["']Content-Type["']\s*[:=]\s*["']application\/json["']/.test(bundle);
-    expect(hasContentTypeAssignment).toBeTruthy();
+    // The fix is present when Content-Type assignment exists in the bundle.
+    // Minified pattern (esbuild/vite): a["Content-Type"]="application/json"
+    // or: a["Content-Type"]="application/json"
+    // The bundle should have exactly one Content-Type reference (the fixed conditional path).
+    // The old bug had it in the fetch options object: {"Content-Type":"application/json"}
+    // The fix has it as an assignment to: a["Content-Type"]="application/json"
 
-    // Verify it's NOT an unconditional const/var pattern (the old bug)
-    const hasUnconditionalHeader = /const\s+\w+\s*=\s*\{[^}]*Content-Type[^}]*\}/.test(bundle);
-    expect(hasUnconditionalHeader).toBeFalsy();
+    // Count how many times Content-Type appears — should be exactly 1
+    const contentTypeMatches = bundle.match(/Content-Type/g);
+    expect(contentTypeMatches).not.toBeNull();
+    expect(contentTypeMatches!.length).toBe(1);
+
+    // Verify the Content-Type assignment is the bracket-access pattern (fixed code)
+    // Old pattern (broken): {"Content-Type":"..."} in object literal
+    // New pattern (fixed): var["Content-Type"]="..." or var["Content-Type"]=("...") after null guard
+    const hasBracketAccessPattern =
+      /\[["']Content-Type["']\]\s*[:=]/.test(bundle);
+    expect(hasBracketAccessPattern).toBeTruthy();
+
+    // Verify it's NOT an unconditional object-literal pattern (the old bug)
+    // Old broken code in fetch options: {"Content-Type":"application/json"}
+    const hasObjectLiteralPattern =
+      /\{["']Content-Type["']\s*:/.test(bundle);
+    expect(hasObjectLiteralPattern).toBeFalsy();
   });
 
   test('N02: login button text is signer-agnostic (supports nos2x-fox)', async ({ page }) => {

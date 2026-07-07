@@ -1,0 +1,177 @@
+{
+  "config": {
+    "argv": [
+      "/usr/bin/node",
+      "/home/c03rad0r/repos/torii-continuum/tests/playwright/node_modules/.bin/playwright",
+      "test",
+      "login-fix.spec.ts",
+      "--config=playwright.config.ts",
+      "--grep",
+      "N01"
+    ],
+    "configFile": "/home/c03rad0r/repos/torii-continuum/tests/playwright/playwright.config.ts",
+    "rootDir": "/home/c03rad0r/repos/torii-continuum/tests/playwright",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/c03rad0r/repos/torii-continuum/tests/playwright",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.61.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "login-fix.spec.ts",
+      "file": "login-fix.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "N — Deployment bundle verification",
+          "file": "login-fix.spec.ts",
+          "line": 124,
+          "column": 6,
+          "specs": [
+            {
+              "title": "N01: deployed JS bundle has conditional Content-Type pattern",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 3794,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n    at /home/c03rad0r/repos/torii-continuum/tests/playwright/login-fix.spec.ts:148:38",
+                        "location": {
+                          "file": "/home/c03rad0r/repos/torii-continuum/tests/playwright/login-fix.spec.ts",
+                          "column": 38,
+                          "line": 148
+                        },
+                        "snippet": "  146 |     const hasContentTypeAssignment =\n  147 |       /Content-Type[\"'\\]]\\s*[:=]\\s*[\"']application\\/json[\"']/.test(bundle);\n> 148 |     expect(hasContentTypeAssignment).toBeTruthy();\n      |                                      ^\n  149 |\n  150 |     // Verify it's NOT an unconditional const/var pattern (the old bug).\n  151 |     // Old broken code: const headers = { 'Content-Type': 'application/json' }"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/c03rad0r/repos/torii-continuum/tests/playwright/login-fix.spec.ts",
+                            "column": 38,
+                            "line": 148
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n\n  146 |     const hasContentTypeAssignment =\n  147 |       /Content-Type[\"'\\]]\\s*[:=]\\s*[\"']application\\/json[\"']/.test(bundle);\n> 148 |     expect(hasContentTypeAssignment).toBeTruthy();\n      |                                      ^\n  149 |\n  150 |     // Verify it's NOT an unconditional const/var pattern (the old bug).\n  151 |     // Old broken code: const headers = { 'Content-Type': 'application/json' }\n    at /home/c03rad0r/repos/torii-continuum/tests/playwright/login-fix.spec.ts:148:38"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:14:08.834Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/login-fix-N-—-Deployment-b-3690b-tional-Content-Type-pattern-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/login-fix-N-—-Deployment-b-3690b-tional-Content-Type-pattern-chromium/video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/login-fix-N-—-Deployment-b-3690b-tional-Content-Type-pattern-chromium/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/login-fix-N-—-Deployment-b-3690b-tional-Content-Type-pattern-chromium/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/c03rad0r/repos/torii-continuum/tests/playwright/login-fix.spec.ts",
+                        "column": 38,
+                        "line": 148
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "4996d34117f46debeb34-5f57a5f8038ade6c2e7e",
+              "file": "login-fix.spec.ts",
+              "line": 125,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-07-07T09:14:07.638Z",
+    "duration": 6190.05,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}
