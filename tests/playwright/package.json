@@ -10,5 +10,9 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.52.0"
+  },
+  "dependencies": {
+    "@types/node": "^26.1.0",
+    "nostr-tools": "^2.23.9"
   }
 }
