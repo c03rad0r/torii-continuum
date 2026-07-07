@@ -191,6 +191,56 @@ test.describe('X — NIP-07 Login Flow', () => {
     expect(body.expires_in).toBe(300);
     expect(body.kind).toBe(22242);
   });
+
+  test('X04: Browser fetch to challenge endpoint works without body (regression test for Content-Type bug)', async ({ page }) => {
+    // This tests the EXACT bug path: the browser sends a POST with
+    // Content-Type: application/json set by the frontend's agent.js req()
+    // but with no body. Fastify rejects this with 400 "Bad Request" if
+    // the Content-Type header is set unconditionally.
+    //
+    // The fix: only set Content-Type when body is present.
+    await navigate(page, '/projects');
+    const result = await page.evaluate(async (agentUrl) => {
+      try {
+        // Simulate what agent.js req() does for POST /api/auth/challenge:
+        // sets Content-Type: application/json, no body, credentials: 'include'
+        const res = await fetch(`${agentUrl}/api/auth/challenge`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+        });
+        const data = await res.json();
+        return { ok: res.ok, status: res.status, challenge: data.challenge };
+      } catch (e) {
+        return { ok: false, error: e.message };
+      }
+    }, AGENT);
+    expect(result.ok).toBe(true);
+    expect(result.status).toBe(200);
+    expect(result.challenge).toBeTruthy();
+    expect(typeof result.challenge).toBe('string');
+    expect(result.challenge!.length).toBeGreaterThanOrEqual(32);
+  });
+
+  test('X05: Browser fetch WITHOUT Content-Type header also works (bodyless POST)', async ({ page }) => {
+    await navigate(page, '/projects');
+    const result = await page.evaluate(async (agentUrl) => {
+      try {
+        // This is the fixed path: no Content-Type header when no body
+        const res = await fetch(`${agentUrl}/api/auth/challenge`, {
+          method: 'POST',
+          credentials: 'include',
+        });
+        const data = await res.json();
+        return { ok: res.ok, status: res.status, challenge: data.challenge };
+      } catch (e) {
+        return { ok: false, error: e.message };
+      }
+    }, AGENT);
+    expect(result.ok).toBe(true);
+    expect(result.status).toBe(200);
+    expect(result.challenge).toBeTruthy();
+  });
 });
 
 // ═══════════════════════════════════════════════════════════
