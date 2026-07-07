@@ -999,10 +999,6 @@ test.describe('AJ — Dashboard Detail', () => {
   });
 });
 
-// ═══════════════════════════════════════════════════════════════
-// AK — CROSS-CUTTING
-// ═══════════════════════════════════════════════════════════════
-
 test.describe('AK — Cross-Cutting', () => {
 
   test('AK01: Brand click from any view navigates to landing', async ({ page }) => {
@@ -1010,7 +1006,7 @@ test.describe('AK — Cross-Cutting', () => {
     const brand = page.locator('.brand').first();
     await brand.click();
     await page.waitForTimeout(500);
-    await expect(page).toHaveURL(/.*#\\/$/);
+    await expect(page).toHaveURL(/.*#\/$/);
   });
 
   test('AK02: Sidebar re-renders on navigation via hashchange', async ({ page }) => {
