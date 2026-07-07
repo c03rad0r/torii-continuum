@@ -1,216 +1,218 @@
-# Amber / NIP-46 Signer Integration Analysis
+# NIP-46 Bunker Integration — Server-Side Signer for Continuum
 
-**Date:** 2026-07-07  
-**Context:** Login flow now works (Content-Type fix deployed), but user needs to configure their npub as admin. Considering whether to integrate Amber as an embedded signer.
-
----
-
-## Current State
-
-- **Login flow:** Challenge → sign with NIP-07 (nos2x-fox/Plebeian Signer) → verify → session token
-- **Problem:** User must have a browser extension installed AND configure their npub in the agent config
-- **Error after fix:** "Agent rejected signature: pubkey is not admin npub" — the login flow works, but the agent doesn't recognize the signing key
+**Date:** 2026-07-07
+**Context:** Login flow works (Content-Type fix deployed), but requires browser extension (nos2x-fox / Plebeian Signer). User wants server-side signer alongside Continuum so no extension needed.
 
 ---
 
-## What is Amber?
+## The Core Insight: Amber Is Not What We Need
 
-[Amber](https://github.com/greenart7c3/Amber) is an Android app that acts as a **NIP-46 remote signer**. It:
+[Amber](https://github.com/greenart7c3/Amber) is an **Android phone app** that acts as a NIP-46 remote signer. It keeps the nsec on the phone and connects to web apps via local network WebSocket. It is NOT deployable as a server-side component.
 
-- Stores nsec on the user's phone (never leaves the device)
-- Exposes a `bunker://` URL for web apps to connect to
-- Signs events when prompted (user sees a confirmation dialog on their phone)
-- Supports multiple accounts
-- Works offline (no server needed — phone and browser communicate locally)
-
-Amber implements **NIP-46** ("Nostr Remote Signing"), not NIP-07 (browser extension API).
+What the user's suggestion actually maps to: **Deploy a NIP-46 bunker server-side** alongside the Continuum agent. The bunker manages nsecs on the VPS and provides a WebSocket endpoint the frontend connects to directly — no phone, no browser extension.
 
 ---
 
-## Amber vs NIP-07 Browser Extension
+## Architecture: Agent-Side NIP-46 Bunker
 
-| Aspect | NIP-07 (nos2x-fox / Plebeian Signer) | NIP-46 (Amber) |
-|--------|---------------------------------------|-----------------|
-| Where key lives | Browser extension storage | Phone app |
-| User interaction | Extension popup | Phone notification |
-| Setup | Install extension + import key | Install app + import key + pair with browser |
-| Multiple apps | Works on any site automatically | Each app pairs separately |
-| Security | Key in browser = same attack surface as browser | Key on separate device = better isolation |
-| Mobile support | Desktop only (extension) | Android native |
-| Connection | Same device | Local network (phone ↔ browser) |
+```
+┌─────────────────────────┐     WebSocket (NIP-46)      ┌──────────────────────────┐
+│  Continuum SPA          │ ◄────────────────────────►  │  Agent on VPS            │
+│  (user's browser)       │                              │                          │
+│                         │  1. bunker://connect         │  /api/nip46/connect     │
+│  auth.js connects to    │  2. signEvent(challenge)     │  (WebSocket endpoint)    │
+│  agent's NIP-46         │  3. getPublicKey()           │  ┌────────────────────┐ │
+│  WebSocket directly     │ ◄── signed event ───────    │  │ NIP-46 Bunker      │ │
+│                         │                              │  │ (Go / Node.js)     │ │
+│  NO browser extension   │                              │  │                    │ │
+│  NO phone needed        │                              │  │ admin_nsec stored   │ │
+│                         │                              │  │ in config.yaml     │ │
+│                         │                              │  └────────────────────┘ │
+└─────────────────────────┘                              └──────────────────────────┘
+```
+
+### How It Works
+
+1. **Agent starts** with `admin_nsec` in config (already there)
+2. **Agent exposes** a NIP-46 WebSocket endpoint at `wss://agent.continuum.com/api/nip46`
+3. **Frontend loads** and auto-connects to the NIP-46 bunker via WebSocket
+4. **Login flow** uses the NIP-46 connection instead of `window.nostr`:
+   - `signer.getPublicKey()` → returns admin pubkey
+   - `signer.signEvent(challenge)` → agent signs internally
+   - No popup, no extension dialog, no phone notification
+5. **Session token** returned as before — seamless
+
+### Why This Is Better Than Browser Extensions
+
+| Aspect | NIP-07 Extension (current) | NIP-46 Bunker (proposed) |
+|--------|---------------------------|--------------------------|
+| UX | Install extension, import key, configure | Nothing — works out of the box |
+| nsec location | Browser extension storage | Server config (encrypted at rest) |
+| Multi-device | Each browser needs extension | One server, any browser |
+| Admin changes | Update every browser | Update one config file |
+| Attack surface | Browser extensions are high-risk | Server-side, auditable |
 
 ---
 
-## Integration Options
+## Implementation Options
 
-### Option A: Deploy Amber alongside Continuum (user's suggestion)
+### Option 1: NIP-46 in the Agent Itself (Recommended)
 
-**What this means:** Bundle Amber's NIP-46 client into the Continuum SPA so users can connect via Amber without needing a browser extension.
+The agent (Go) already handles auth, sessions, and wallet. Adding a NIP-46 WebSocket handler is the most integrated approach.
 
 **Required changes:**
 
-1. **Add NIP-46 client library** to the frontend (e.g. `nostr-tools` already has NIP-46 support, or use `@snort/nip46`)
-2. **Add "Connect via Amber" button** in the login modal alongside the existing extension flow
-3. **Bunker connection flow:**
-   - User scans a QR code or pastes a `bunker://` URL from Amber
-   - SPA connects to Amber via local WebSocket
-   - Amber prompts user on phone: "Sign login challenge?"
-   - User approves → event signed → agent verifies → session token issued
-4. **Fall back to NIP-07** if no Amber connection is available
+1. **Agent (Go):** Add NIP-46 WebSocket endpoint (`/api/nip46`)
+   - Uses `nostr-sdk` or `nips` Go library for NIP-46 protocol
+   - Manages one signing key (the admin nsec)
+   - Authenticates WebSocket connections via session token or origin check
+   
+2. **Frontend (JS):** Replace `window.nostr.signEvent()` with NIP-46 client
+   - Use `@nostr/nip46` or raw WebSocket + NIP-46 encryption
+   - Auto-connect on app load when `VITE_AGENT_URL` is configured
+   - Fall back to `window.nostr` if NIP-46 connection fails (for non-admin users)
 
-**Estimated effort:** 3-5 days (NIP-46 is complex — key exchange, encryption, WebSocket management)
+**Estimated effort:** 1-2 weeks (NIP-46 is a complex protocol — E2E encryption, event signing over WebSocket)
 
-**Limitations:**
-- Amber is Android-only. iOS users would need a different signer
-- The phone must be on the same network as the browser
-- NIP-46 adds latency (every sign operation goes through the phone)
-- Amber's bunker protocol is still evolving
+### Option 2: nsecbunker Sidecar
 
-### Option B: Multi-admin npub support (simpler fix)
+Deploy [nsecbunker](https://github.com/kind0/nsecbunker) as a sidecar container alongside the agent.
 
-**What this means:** Change the agent to accept multiple admin npubs instead of one. The user adds their npub from nos2x-fox to the config.
+- Python NIP-46 bunker implementation
+- Runs on a separate port, agent proxies `/api/nip46` → sidecar
+- Manages keys in SQLite
+- Adds another moving part (sidecar process)
 
-**Required changes:**
-1. Change `admin_npub: "npub1..."` to `admin_npubs: ["npub1...", "npub2..."]` in config
-2. Update `auth.mjs` `verifyChallenge()` to check against all allowed npubs
-3. Update `verifySessionToken()` similarly
-4. Add config validation for the array
+**Estimated effort:** 3-5 days (deploy + configure + proxy + test)
 
-**Estimated effort:** 1-2 hours (simple config change + array iteration)
+### Option 3: Minimal NIP-46 Shim in Agent (MVP — Recommended First Step)
 
-### Option C: Deploy a browser-based signer as part of the SPA
+The absolute simplest approach: add a minimal NIP-46 WebSocket to the agent that **only handles the login flow**:
 
-**What this means:** Embed a minimal NIP-07 signer directly in the Continuum web app, so users don't need a separate extension. The key is stored in the browser's local storage (encrypted with a PIN/password).
+1. Agent exposes `wss://agent.continuum.com/api/nip46` as a simple WebSocket
+2. The WebSocket accepts two messages:
+   - `get_public_key` → returns admin pubkey
+   - `sign_event` → signs the provided event with admin nsec
+3. Frontend connects, gets pubkey, sends challenge event, gets signature back
+4. Agent then uses the signature to complete the verify flow (same as NIP-07 path)
 
-**Required changes:**
-1. Add key generation + encrypted storage to the SPA
-2. Implement `window.nostr` interface within the app
-3. Add PIN-protected unlock flow
-4. Handle key import (nsec/npub)
+This is NOT a full NIP-46 implementation (no E2E encryption, no bunker protocol negotiation), but it's a **functional signer** that eliminates the browser extension dependency.
 
-**Estimated effort:** 2-3 days (NIP-07 implementation, encryption, UX)
-
-**Security concern:** This defeats the purpose of NIP-07 — the key is in the browser's JS context, which is the largest attack surface. Recommended against for production.
+**Estimated effort:** 4-8 hours (agent WebSocket + frontend client)
 
 ---
 
-## Recommendation
+## Recommended Path
 
-**Short-term (this week):** Option B — multi-admin npub support. The fix is trivial (1 hour) and unblocks the user immediately. The login flow is already working end-to-end, they just need to add their npub to the allowed list.
-
-**Medium-term (next sprint):** Option A — Amber/NIP-46 integration. This is the right architectural direction: the user's key lives on their phone, not in any browser. The SPA talks to Amber via NIP-46. This provides:
-- Better security (key on separate device)
-- No browser extension dependency
-- Phone as the canonical signing device
-- Works with any NIP-46 signer (Amber, other apps)
-
-**Not recommended:** Option C — embedding a signer in the SPA. This reduces security and contradicts the Nostr principle of keeping keys out of web apps.
+| Phase | What | When | Effort |
+|-------|------|------|--------|
+| **Now** | Deploy Content-Type fix + multi-admin npub support | Done / hours | 1h |
+| **Phase 1** | Minimal NIP-46 shim (Option 3) | This week | 4-8h |
+| **Phase 2** | Proper NIP-46 bunker in agent (Option 1) | Next sprint | 1-2w |
+| **Phase 3** | Multi-user bunker + key rotation | Future | 2-3w |
 
 ---
 
-## Multi-Admin Config Change (Option B — Quick Fix)
+## Frontend Changes (auth.js)
 
-### Config change
-
-```yaml
-# Before (single npub):
-admin_npub: "npub1REPLACE..."
-
-# After (array):
-admin_npubs:
-  - "npub1REPLACE_WITH_YOUR_NPUB"
-  # Add more npubs as needed
-```
-
-### Code change (auth.mjs)
+The `src/data/agent.js` module already handles all agent communication. Adding NIP-46 support means adding a `Nip46Signer` class:
 
 ```javascript
-// Before (line 46-52):
-const decoded = nip19.decode(cfg.admin_npub);
-if (decoded.type !== 'npub') throw new Error('not an npub');
-adminHex = decoded.data;
+// src/data/agent.js — new NIP-46 signer path
 
-// After:
-const adminHexes = cfg.admin_npubs.map(npub => {
-  const decoded = nip19.decode(npub);
-  if (decoded.type !== 'npub') throw new Error(`not an npub: ${npub}`);
-  return decoded.data;
-});
-```
+class Nip46Signer {
+  constructor(wsUrl) {
+    this.wsUrl = wsUrl;
+    this.ws = null;
+    this.pubkey = null;
+  }
 
-```javascript
-// Before (verifyChallenge, line 73):
-if (event.pubkey !== adminHex) return { ok: false, reason: 'pubkey is not admin npub' };
+  async connect() {
+    this.ws = new WebSocket(this.wsUrl);
+    await new Promise((resolve, reject) => {
+      this.ws.onopen = resolve;
+      this.ws.onerror = reject;
+    });
+  }
 
-// After:
-if (!adminHexes.includes(event.pubkey)) return { ok: false, reason: 'pubkey is not an admin npub' };
-```
+  async getPublicKey() {
+    if (this.pubkey) return this.pubkey;
+    const resp = await this.send({ type: 'get_public_key' });
+    this.pubkey = resp.pubkey;
+    return this.pubkey;
+  }
 
-```javascript
-// Before (verifySessionToken, line 135):
-if (pk !== adminHex) return { ok: false, reason: 'not admin pubkey' };
+  async signEvent(event) {
+    return this.send({ type: 'sign_event', event });
+  }
 
-// After:
-if (!adminHexes.includes(pk)) return { ok: false, reason: 'not an admin pubkey' };
-```
-
----
-
-## Amber/NIP-46 Integration (Option A — Medium-term)
-
-### Architecture
-
-```
-┌──────────────┐     NIP-46 bunker      ┌──────────────┐
-│  Continuum   │ ◄──── WebSocket ────►  │  Amber (Phone)│
-│  SPA (browser)│                        │  (nsec stored)│
-│              │     sign challenge      │              │
-│  auth.js     │ ────► signEvent ────►  │  signEvent() │
-│              │ ◄─── signed event ◄──  │              │
-└──────┬───────┘                        └──────────────┘
-       │
-       │ POST /api/auth/verify {event}
-       ▼
-┌──────────────┐
-│  Agent (VPS) │
-└──────────────┘
-```
-
-### Implementation steps
-
-1. **Add `@snort/nip46` or implement raw NIP-46 client** — handles bunker connection, encryption, event signing
-2. **Add Amber connection UI** — QR code scanner or text input for `bunker://` URL
-3. **Modify auth.js `startLogin()`** — add Amber path alongside NIP-07 path
-4. **Handle connection state** — Amber may disconnect; show reconnection UI
-5. **Fallback logic** — if no Amber and no NIP-07, show both options
-
-### NIP-46 client example (pseudocode)
-
-```javascript
-import { Nip46 } from '@snort/nip46';
-
-async function loginWithAmber(bunkerUrl) {
-  const signer = new Nip46(bunkerUrl, {
-    clientName: 'Continuum',
-    clientUrl: window.location.origin,
-  });
-  await signer.init();
-
-  // Get pubkey from phone
-  const pubkey = await signer.getPublicKey();
-
-  // Sign challenge through phone
-  const challenge = await requestChallenge();
-  const signed = await signer.signEvent({
-    kind: 22242,
-    created_at: Math.floor(Date.now() / 1000),
-    content: challenge,
-    tags: [['challenge', challenge], ['relay', window.location.origin]],
-  });
-
-  const verified = await verifyChallenge(signed);
-  if (verified.ok) {
-    // Session established
+  send(msg) {
+    return new Promise((resolve, reject) => {
+      const id = crypto.randomUUID();
+      this.ws.send(JSON.stringify({ ...msg, id }));
+      const handler = (evt) => {
+        const resp = JSON.parse(evt.data);
+        if (resp.id === id) {
+          this.ws.removeEventListener('message', handler);
+          resolve(resp);
+        }
+      };
+      this.ws.addEventListener('message', handler);
+    });
   }
 }
 ```
+
+And in `auth.js`, the login flow:
+
+```javascript
+// src/auth.js — NIP-46 login path
+
+export async function startLogin() {
+  const challenge = await requestChallenge();
+  if (!challenge.ok) return { ok: false, reason: challenge.reason };
+
+  // Try NIP-46 first (built-in signer), fall back to NIP-07
+  if (window.__continuumBunker) {
+    try {
+      const pubkey = await window.__continuumBunker.getPublicKey();
+      const signed = await window.__continuumBunker.signEvent({
+        kind: 22242,
+        created_at: Math.floor(Date.now() / 1000),
+        content: challenge.data.challenge,
+        tags: [['challenge', challenge.data.challenge]],
+      });
+      return verifyChallenge(signed);
+    } catch (e) {
+      console.warn('NIP-46 signer failed, falling back to NIP-07:', e);
+    }
+  }
+
+  // Fall back to NIP-07 (browser extension)
+  if (typeof window.nostr?.signEvent !== 'function') {
+    return showSignerModal();
+  }
+  // ... existing NIP-07 flow
+}
+```
+
+---
+
+## Security Considerations
+
+| Concern | Mitigation |
+|---------|-----------|
+| nsec on VPS | Already there in config.yaml. Encrypt at rest with Vault/age |
+| WebSocket MITM | WSS-only (TLS). Validate Origin header |
+| Unauthorized sign requests | Require session token or CORS origin check |
+| Key rotation | Admin can update nsec in config + restart agent |
+| Logging | Never log the nsec or signed events to agent logs |
+
+---
+
+## Related
+
+- [NIP-46: Nostr Remote Signing](https://github.com/nostr-protocol/nips/blob/master/46.md)
+- [nsecbunker](https://github.com/kind0/nsecbunker) — Python NIP-46 bunker
+- [nostr-sdk (Rust)](https://github.com/rust-nostr/nostr) — has NIP-46 client/server
+- [NDK NIP-46 package](https://github.com/nostr-dev-kit/ndk/tree/main/packages/nip46) — TypeScript NIP-46 client

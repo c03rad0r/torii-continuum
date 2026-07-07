@@ -4,10 +4,9 @@
       "/usr/bin/node",
       "/home/c03rad0r/repos/torii-continuum/tests/playwright/node_modules/.bin/playwright",
       "test",
-      "login-fix.spec.ts",
-      "--config=playwright.config.ts",
-      "--grep",
-      "N01"
+      "auth-flow.spec.ts",
+      "--config",
+      "playwright.config.ts"
     ],
     "configFile": "/home/c03rad0r/repos/torii-continuum/tests/playwright/playwright.config.ts",
     "rootDir": "/home/c03rad0r/repos/torii-continuum/tests/playwright",
@@ -69,21 +68,21 @@
   },
   "suites": [
     {
-      "title": "login-fix.spec.ts",
-      "file": "login-fix.spec.ts",
+      "title": "auth-flow.spec.ts",
+      "file": "auth-flow.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "N — Deployment bundle verification",
-          "file": "login-fix.spec.ts",
-          "line": 124,
+          "title": "W — Logged-in UI (token injection)",
+          "file": "auth-flow.spec.ts",
+          "line": 59,
           "column": 6,
           "specs": [
             {
-              "title": "N01: deployed JS bundle has conditional Content-Type pattern",
-              "ok": false,
+              "title": "W01: Session button shows \"Sign out\" when logged in",
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -96,68 +95,892 @@
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 3794,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n    at /home/c03rad0r/repos/torii-continuum/tests/playwright/login-fix.spec.ts:148:38",
-                        "location": {
-                          "file": "/home/c03rad0r/repos/torii-continuum/tests/playwright/login-fix.spec.ts",
-                          "column": 38,
-                          "line": 148
-                        },
-                        "snippet": "  146 |     const hasContentTypeAssignment =\n  147 |       /Content-Type[\"'\\]]\\s*[:=]\\s*[\"']application\\/json[\"']/.test(bundle);\n> 148 |     expect(hasContentTypeAssignment).toBeTruthy();\n      |                                      ^\n  149 |\n  150 |     // Verify it's NOT an unconditional const/var pattern (the old bug).\n  151 |     // Old broken code: const headers = { 'Content-Type': 'application/json' }"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/c03rad0r/repos/torii-continuum/tests/playwright/login-fix.spec.ts",
-                            "column": 38,
-                            "line": 148
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n\n  146 |     const hasContentTypeAssignment =\n  147 |       /Content-Type[\"'\\]]\\s*[:=]\\s*[\"']application\\/json[\"']/.test(bundle);\n> 148 |     expect(hasContentTypeAssignment).toBeTruthy();\n      |                                      ^\n  149 |\n  150 |     // Verify it's NOT an unconditional const/var pattern (the old bug).\n  151 |     // Old broken code: const headers = { 'Content-Type': 'application/json' }\n    at /home/c03rad0r/repos/torii-continuum/tests/playwright/login-fix.spec.ts:148:38"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 8410,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-07-07T09:14:08.834Z",
+                      "startTime": "2026-07-07T09:45:28.310Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "screenshot",
                           "contentType": "image/png",
-                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/login-fix-N-—-Deployment-b-3690b-tional-Content-Type-pattern-chromium/test-failed-1.png"
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-W-—-Logged-in-UI-7b1d9-ows-Sign-out-when-logged-in-chromium/test-finished-1.png"
                         },
                         {
                           "name": "video",
                           "contentType": "video/webm",
-                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/login-fix-N-—-Deployment-b-3690b-tional-Content-Type-pattern-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/login-fix-N-—-Deployment-b-3690b-tional-Content-Type-pattern-chromium/error-context.md"
-                        },
-                        {
-                          "name": "trace",
-                          "contentType": "application/zip",
-                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/login-fix-N-—-Deployment-b-3690b-tional-Content-Type-pattern-chromium/trace.zip"
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-W-—-Logged-in-UI-7b1d9-ows-Sign-out-when-logged-in-chromium/video.webm"
                         }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/c03rad0r/repos/torii-continuum/tests/playwright/login-fix.spec.ts",
-                        "column": 38,
-                        "line": 148
-                      }
+                      ]
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
-              "id": "4996d34117f46debeb34-5f57a5f8038ade6c2e7e",
-              "file": "login-fix.spec.ts",
-              "line": 125,
+              "id": "df6b40174562c70df515-dbfac1759a7246820aef",
+              "file": "auth-flow.spec.ts",
+              "line": 60,
+              "column": 7
+            },
+            {
+              "title": "W02: Landing CTA shows \"Go to your dashboard\" when logged in",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6410,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:45:37.960Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-W-—-Logged-in-UI-66458-ur-dashboard-when-logged-in-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-W-—-Logged-in-UI-66458-ur-dashboard-when-logged-in-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-ce4ee6b9e335a5fe0a6b",
+              "file": "auth-flow.spec.ts",
+              "line": 69,
+              "column": 7
+            },
+            {
+              "title": "W03: Chat dock greeting differs when logged in",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7776,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:45:44.471Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-W-—-Logged-in-UI-33f45-ting-differs-when-logged-in-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-W-—-Logged-in-UI-33f45-ting-differs-when-logged-in-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-9688ec7029b1d6fc54bc",
+              "file": "auth-flow.spec.ts",
+              "line": 79,
+              "column": 7
+            },
+            {
+              "title": "W04: Logged-in state survives page reload",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6103,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:45:52.334Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-W-—-Logged-in-UI-80dbb--state-survives-page-reload-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-W-—-Logged-in-UI-80dbb--state-survives-page-reload-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-29f862425e3d85ec79d2",
+              "file": "auth-flow.spec.ts",
+              "line": 92,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "X — NIP-07 Login Flow",
+          "file": "auth-flow.spec.ts",
+          "line": 108,
+          "column": 6,
+          "specs": [
+            {
+              "title": "X01: Login button with no NIP-07 shows \"signer not found\" modal",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6565,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:45:58.489Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-X-—-NIP-07-Login-3816f-hows-signer-not-found-modal-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-X-—-NIP-07-Login-3816f-hows-signer-not-found-modal-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-d143f08da24960b43e82",
+              "file": "auth-flow.spec.ts",
+              "line": 109,
+              "column": 7
+            },
+            {
+              "title": "X02: Login with NIP-07 stub completes full flow",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7259,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:46:05.189Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-X-—-NIP-07-Login-b541b-07-stub-completes-full-flow-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-X-—-NIP-07-Login-b541b-07-stub-completes-full-flow-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-3a53510e84ee18d85a14",
+              "file": "auth-flow.spec.ts",
+              "line": 133,
+              "column": 7
+            },
+            {
+              "title": "X03: Challenge endpoint returns valid challenge",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1094,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:46:12.564Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-a2f49b5d6f1660017b9c",
+              "file": "auth-flow.spec.ts",
+              "line": 185,
+              "column": 7
+            },
+            {
+              "title": "X04: Browser-side fetch to challenge works (no Content-Type header on bodyless POST is the correct fix)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4378,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:46:13.749Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-X-—-NIP-07-Login-b16f2-ss-POST-is-the-correct-fix--chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-X-—-NIP-07-Login-b16f2-ss-POST-is-the-correct-fix--chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-b7a93eb4813af747688a",
+              "file": "auth-flow.spec.ts",
+              "line": 195,
+              "column": 7
+            },
+            {
+              "title": "X05: Browser fetch WITHOUT Content-Type header also works (bodyless POST)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4058,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:46:18.214Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-X-—-NIP-07-Login-71e08-r-also-works-bodyless-POST--chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-X-—-NIP-07-Login-71e08-r-also-works-bodyless-POST--chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-b24c8391e0e70687a0f7",
+              "file": "auth-flow.spec.ts",
+              "line": 223,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Y — Post-Login Agent API",
+          "file": "auth-flow.spec.ts",
+          "line": 248,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Y01: Chat sends POST to agent when logged in (intercepted)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7415,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:46:22.317Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-Y-—-Post-Login-A-4d5ad-when-logged-in-intercepted--chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-Y-—-Post-Login-A-4d5ad-when-logged-in-intercepted--chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-351f46fb0de8af28ca19",
+              "file": "auth-flow.spec.ts",
+              "line": 249,
+              "column": 7
+            },
+            {
+              "title": "Y02: Wallet balance endpoint called when logged in on Routstr",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7279,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:46:29.765Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-Y-—-Post-Login-A-ad603-d-when-logged-in-on-Routstr-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-Y-—-Post-Login-A-ad603-d-when-logged-in-on-Routstr-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-da58ab0771f30c48bd91",
+              "file": "auth-flow.spec.ts",
+              "line": 276,
+              "column": 7
+            },
+            {
+              "title": "Y03: Protected agent endpoints return 401 without valid token",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 814,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:46:37.065Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-f63c46dc81b3aa82f880",
+              "file": "auth-flow.spec.ts",
+              "line": 297,
+              "column": 7
+            },
+            {
+              "title": "Y04: Health endpoint returns full metadata",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 237,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:46:37.909Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-2b4abf2573f8aee883d9",
+              "file": "auth-flow.spec.ts",
+              "line": 305,
+              "column": 7
+            },
+            {
+              "title": "Y05: Chat endpoint rejects invalid body shapes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 220,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:46:38.160Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-b96797f3c79c293def78",
+              "file": "auth-flow.spec.ts",
+              "line": 317,
+              "column": 7
+            },
+            {
+              "title": "Y06: Reflect endpoint rejects without auth",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 228,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:46:38.400Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-b48670ea0e5396fb8643",
+              "file": "auth-flow.spec.ts",
+              "line": 325,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Z — Sign-out & Edge Cases",
+          "file": "auth-flow.spec.ts",
+          "line": 337,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Z01: Sign out from sidebar clears token and switches UI",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4633,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:46:38.652Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-Z-—-Sign-out-Edg-b3152-lears-token-and-switches-UI-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-Z-—-Sign-out-Edg-b3152-lears-token-and-switches-UI-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-ae8566584cae84b56cb0",
+              "file": "auth-flow.spec.ts",
+              "line": 338,
+              "column": 7
+            },
+            {
+              "title": "Z02: 401 from agent API auto-clears the session token (environment-dependent)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9683,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:46:43.302Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-Z-—-Sign-out-Edg-1f0c8-oken-environment-dependent--chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-Z-—-Sign-out-Edg-1f0c8-oken-environment-dependent--chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-827c246fefa0636bf61b",
+              "file": "auth-flow.spec.ts",
+              "line": 354,
+              "column": 7
+            },
+            {
+              "title": "Z03: Invalid token format (not 4 parts) does NOT set logged-in state",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3055,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:46:53.003Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-Z-—-Sign-out-Edg-c8003-oes-NOT-set-logged-in-state-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-Z-—-Sign-out-Edg-c8003-oes-NOT-set-logged-in-state-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-53e5884a6f7a3b22774d",
+              "file": "auth-flow.spec.ts",
+              "line": 379,
+              "column": 7
+            },
+            {
+              "title": "Z04: Expired token does NOT set logged-in state",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2982,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:46:56.079Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-Z-—-Sign-out-Edg-b011d-oes-NOT-set-logged-in-state-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-Z-—-Sign-out-Edg-b011d-oes-NOT-set-logged-in-state-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-ce434357360c0363bf1e",
+              "file": "auth-flow.spec.ts",
+              "line": 390,
+              "column": 7
+            },
+            {
+              "title": "Z05: Landing CTA navigates to dashboard when logged in",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4824,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:46:59.078Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-Z-—-Sign-out-Edg-04aa6-to-dashboard-when-logged-in-chromium/test-finished-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "/home/c03rad0r/repos/torii-continuum/tests/playwright/test-results/auth-flow-Z-—-Sign-out-Edg-04aa6-to-dashboard-when-logged-in-chromium/video.webm"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-544f61bbfb45f129bcdf",
+              "file": "auth-flow.spec.ts",
+              "line": 402,
+              "column": 7
+            },
+            {
+              "title": "Z06: Verify endpoint rejects empty body",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 233,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-07-07T09:47:03.928Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "df6b40174562c70df515-dc3c842353b3bffbe0b2",
+              "file": "auth-flow.spec.ts",
+              "line": 414,
               "column": 7
             }
           ]
@@ -167,11 +990,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-07-07T09:14:07.638Z",
-    "duration": 6190.05,
-    "expected": 0,
+    "startTime": "2026-07-07T09:45:23.121Z",
+    "duration": 101179.432,
+    "expected": 21,
     "skipped": 0,
-    "unexpected": 1,
+    "unexpected": 0,
     "flaky": 0
   }
 }
