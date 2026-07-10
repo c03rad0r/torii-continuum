@@ -67,6 +67,6 @@ New Fastify service that owns the sovereignty invariants for a single admin npub
 ## Next slices
 
 - **CONT-AGENT-1b** — local Ollama fallback (Llama 3.1 8B on the VPS for offline reasoning; Routstr still primary).
-- **CONT-AGENT-2** — `todo.patch` skill (writes to `continuum-todo.md` via the agent, with browser-side signature for the eventual Nostr publish).
+- **CONT-AGENT-2** — `todo.patch` skill (writes to `torii-continuum-todo.md` via the agent, with browser-side signature for the eventual Nostr publish).
 - **CONT-AGENT-3** — `brain.write` (drafts wiki page edits into `pending/` for a human click).
 - **NGIT-1** — announce the repo on Nostr via NIP-34 (deferred until we have a real PoC to point at).

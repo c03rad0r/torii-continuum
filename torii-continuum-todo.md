@@ -4,15 +4,15 @@
 
 > This file is the **active task list and source of truth for Torii Continuum**. Update it whenever Continuum tasks are added, changed, completed, removed, or reprioritised.
 
-> Continuum docs (this repo): `strategy.md`, `continuum-todo.md`, `torii-continuum-handoff.md`, `README.md`.
-> Quest tasks live in the `torii-quest` repo (`quest-todo.md`), not here. Do not merge queues.
+> Continuum docs (this repo, per `Torii` Space instructions): `torii-continuum-strategy.md`, `torii-continuum-todo.md`, `torii-continuum-progress.md`, `torii-continuum-handoff.md`, `README.md`.
+> Quest tasks live in the `torii-quest` repo (`torii-quest-todo.md`), not here. Do not merge queues.
 
 > Older reports (`torii-v-*.md`, Nostr Arena docs, legacy snapshots) that still live in the Quest repo are **archival only**. Do not use them as task queues.
 
 ### Active tasks
 
 - Keep Continuum as the separate oversight app and do not merge its task queue back into Quest.
-- Prepare Continuum to use the same safe assistant-editable .md pipeline as quest-todo.md so Continuum todo updates can be made without manual copy-editing. **BUILT v0.2.259** — `continuum-todo.md` is now in the `mdPatch` whitelist (full append/replace/note/list); `npm run md:patch -- note continuum-todo.md "..."` appends a timestamped note under "Active tasks".
+- Prepare Continuum to use the same safe assistant-editable .md pipeline as `torii-quest-todo.md` so Continuum todo updates can be made without manual copy-editing. **BUILT v0.2.259** — `torii-continuum-todo.md` is now in the `mdPatch` whitelist (full append/replace/note/list); `npm run md:patch -- note torii-continuum-todo.md "..."` appends a timestamped note under "Active tasks". (Note: the `md:patch` tool itself lives in the `torii-quest` repo; Continuum consumes it. When invoking from within Continuum, adjust the target-file argument for the current working directory.)
 - Keep Continuum work read-only / mockup-first unless a live admin action is explicitly required and approved.
 - **CONT-AGENT-1 — Self-Learning Continuum v1 (VPS agent skeleton, drafts-only, no key material).** **PARTIAL v0.2.0-alpha** — invariants scaffold shipped: `agent/` Fastify daemon with NIP-07 challenge/verify, HMAC-signed session tokens, Cashu wallet on VPS (`@cashu/cashu-ts` v2, per-mint proofs at `memory/wallet/`, mode 0600), Routstr chat client (OpenAI-compat, DeepSeek-Chat default, DeepSeek-Coder-V2 for coding, fallback ladder, per-request Cashu payment, `memory/costs.jsonl`), first `chat` skill. Frontend integrations: landing page at `#/`, sidebar Login button (Plebeian Signer), chat dock routes through `/api/chat` when signed in, Routstr Connect opens real Cashu-token top-up modal. Docs: `agent/README.md`, `agent/PRIVACY.md`, slice report `torii-continuum-v0.2.0-cont-agent-1-report.md`. **Deferred**: `brain.read`/`brain.write`/`todo.patch`/`nostr.draft` skills (CONT-AGENT-2/3), local Ollama fallback (CONT-AGENT-1b), Cashu refund tracking, `pending/` drafts panel in Console. Turn Continuum from a read-only mockup dashboard into a sovereign personal AI + project engine. **VPS-only in v1** — Linux/Mac clients come later as thin frontends. **No nsec on the VPS**: signing lives in the browser via **Plebeian Signer** (NIP-07). **No plaintext Nostr write path**: `nostr.draft` skill only produces NIP-17 gift-wrapped envelopes; the plaintext code path is absent, not disabled. **Model layer = Routstr**: pay-per-request in Cashu against pinned providers, OpenAI-compatible client, per-skill model pinning + fallback ladder present-but-off. **Human-in-the-loop by construction**: agent drafts to `agent/pending/*.json`; Continuum Console renders; user approves; Plebeian Signer signs; browser publishes.
 
