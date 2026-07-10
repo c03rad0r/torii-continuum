@@ -11,6 +11,8 @@
 
 ### Active tasks
 
+- **CONT-HEALTH-1 — dashboard provider reachability card. DONE v0.2.13-alpha** — `#/dashboard` now shows a live Provider card polling `/api/health/models` every 20s. Routstr = `Enabled` (no server-side reachability probe yet); Ollama = `Reachable`/`Unreachable`/`Disabled` with reason line. Self-cleans on route change; graceful when logged-out or when `VITE_AGENT_URL` is empty. Bonus: `/api/health*` responses now read version from `agent/package.json` at boot instead of the hardcoded `0.2.6-alpha` string.
+- **CONT-HEALTH-2 — real Cashu wallet health probe (next).** `torii doctor` today only pings the mint URL. Add a signed wallet-info call so it verifies the mint's public key and reports actual balance. Ship as a new row in the same Provider card + a new admin-gated `/api/health/wallet` endpoint mirroring `/api/health/models`.
 - Keep Continuum as the separate oversight app and do not merge its task queue back into Quest.
 - Prepare Continuum to use the same safe assistant-editable .md pipeline as `torii-quest-todo.md` so Continuum todo updates can be made without manual copy-editing. **BUILT v0.2.259** — `torii-continuum-todo.md` is now in the `mdPatch` whitelist (full append/replace/note/list); `npm run md:patch -- note torii-continuum-todo.md "..."` appends a timestamped note under "Active tasks". (Note: the `md:patch` tool itself lives in the `torii-quest` repo; Continuum consumes it. When invoking from within Continuum, adjust the target-file argument for the current working directory.)
 - Keep Continuum work read-only / mockup-first unless a live admin action is explicitly required and approved.

@@ -34,6 +34,18 @@ import { KINDS, dirForKind } from './lib/events.mjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const AGENT_ROOT = __dirname;
 
+// Read version once at boot from agent/package.json so /api/health and
+// /api/health/models never drift from the shipped package. Fail loud if
+// the file is missing so a broken container can't silently report a bogus
+// version. Cheap (single sync-ish read at boot, no runtime cost).
+let VERSION = 'unknown';
+try {
+  const pkgRaw = await readFile(join(AGENT_ROOT, 'package.json'), 'utf8');
+  VERSION = JSON.parse(pkgRaw).version || 'unknown';
+} catch (e) {
+  console.error(`[boot] could not read agent/package.json for VERSION: ${e.message}`);
+}
+
 const cfg = loadConfig();
 
 const app = Fastify({
@@ -140,7 +152,7 @@ async function requireAdmin(req, reply) {
 app.get('/api/health', async () => ({
   ok: true,
   service: 'torii-continuum-agent',
-  version: '0.2.6-alpha',
+  version: VERSION,
   time: new Date().toISOString(),
   memory_unlocked: memoryCache.isUnlocked(),
 }));
@@ -153,6 +165,7 @@ app.get('/api/health/models', { preHandler: requireAdmin }, async () => {
   const ollamaEnabled = cfg.ollama?.enabled === true;
   const ollamaProbe = ollamaEnabled ? await ollama.probe() : { ok: false, reason: 'disabled in config' };
   return {
+    version: VERSION,
     strategy,
     routstr: {
       enabled: true,

@@ -1,10 +1,139 @@
 /** Dashboard — the Continuum project-oversight surface, now an internal page.
  *  Kept intentionally light: it summarises the projects you have and links
  *  out to each sibling app's own dashboard.
+ *
+ *  CONT-HEALTH-1 (v0.2.13): also renders a live Provider card that polls
+ *  /api/health/models every 20s while the dashboard is mounted so the
+ *  operator sees Routstr + Ollama reachability without touching a terminal.
+ *  Admin-gated endpoint — a logged-out visitor sees a login prompt instead.
  */
 import { h, clear, timeAgo } from './util.js';
 import { listProjects, milestonesFor, todosFor, sessionsFor } from '../data/store.js';
 import { setChatContext } from '../chat.js';
+import { isAgentConfigured, isLoggedIn, healthModels } from '../data/agent.js';
+
+// Module-level poll handle mirrors the routstr.js pattern. A single dashboard
+// mount owns at most one interval; navigating away clears it via the
+// hashchange listener installed below.
+let providerPollHandle = null;
+let providerHashListener = null;
+const POLL_INTERVAL_MS = 20_000;
+
+function stopProviderPoll() {
+  if (providerPollHandle) { clearInterval(providerPollHandle); providerPollHandle = null; }
+  if (providerHashListener) {
+    window.removeEventListener('hashchange', providerHashListener);
+    providerHashListener = null;
+  }
+}
+
+// pill(state, text) — small status chip using the existing .pill classes.
+// state ∈ {'ok','warn','danger','muted'}
+function pill(state, text) {
+  const cls = state === 'muted' ? 'pill' : `pill ${state}`;
+  return h('span', { class: cls, text });
+}
+
+// Render the provider card body into `body` given a resolved health payload
+// (or a failure envelope from the agent client). Idempotent — called on
+// every poll tick to refresh in place.
+function renderProviderBody(body, res, elapsedMs) {
+  clear(body);
+
+  // Not configured (demo build with VITE_AGENT_URL empty)
+  if (!isAgentConfigured()) {
+    body.appendChild(h('div', { class: 'muted', style: 'font-size: 13px;', text: 'Agent URL not configured for this build. In a self-hosted deploy this card shows live Routstr + Ollama reachability.' }));
+    return;
+  }
+
+  // Not logged in — endpoint is admin-gated, so no point calling it
+  if (!isLoggedIn()) {
+    body.appendChild(h('div', { class: 'muted', style: 'font-size: 13px;', text: 'Sign in with your Nostr key (sidebar → Sign in) to see live provider status. The /api/health/models endpoint is admin-gated.' }));
+    return;
+  }
+
+  // Call failed (network / 401 / 5xx)
+  if (!res.ok) {
+    body.appendChild(h('div', {}, [
+      pill('danger', 'Unreachable'),
+      h('span', { style: 'margin-left: 8px; font-size: 13px;', text: res.reason || 'unknown error' }),
+    ]));
+    return;
+  }
+
+  const d = res.data || {};
+  const strategy = d.strategy || '—';
+  const version = d.version || '—';
+
+  // Strategy + version row
+  body.appendChild(h('div', { class: 'muted', style: 'font-size: 12px; margin-bottom: 10px;', text: `Strategy: ${strategy} · Agent ${version} · ${elapsedMs} ms round-trip` }));
+
+  // Routstr row — enabled today with no server-side reachability probe, so we
+  // show "Enabled" rather than fake a green light. When we add a Routstr
+  // reachability probe this can promote to ok/danger like Ollama.
+  const rs = d.routstr || {};
+  const routstrRow = h('div', { class: 'provider-row' }, [
+    h('div', { class: 'provider-name', text: 'Routstr' }),
+    rs.enabled ? pill('ok', 'Enabled') : pill('muted', 'Disabled'),
+    h('span', { class: 'provider-model', text: rs.model || '' }),
+  ]);
+  body.appendChild(routstrRow);
+
+  // Ollama row — the endpoint DOES probe reachability, so we can show
+  // ok/danger/muted honestly.
+  const ol = d.ollama || {};
+  let ollamaPill;
+  if (!ol.enabled) ollamaPill = pill('muted', 'Disabled');
+  else if (ol.reachable) ollamaPill = pill('ok', 'Reachable');
+  else ollamaPill = pill('danger', 'Unreachable');
+  const ollamaRow = h('div', { class: 'provider-row' }, [
+    h('div', { class: 'provider-name', text: 'Ollama' }),
+    ollamaPill,
+    h('span', { class: 'provider-model', text: ol.chat_model || '' }),
+  ]);
+  body.appendChild(ollamaRow);
+
+  if (ol.enabled && !ol.reachable && ol.reason) {
+    body.appendChild(h('div', { class: 'muted', style: 'font-size: 12px; margin-top: 6px;', text: `Ollama: ${ol.reason}` }));
+  }
+}
+
+async function tickProvider(body) {
+  // If the dashboard was navigated away from between ticks, the body node is
+  // still detached — bail out to avoid a spurious render into limbo.
+  if (!body.isConnected) { stopProviderPoll(); return; }
+  const t0 = performance.now();
+  const res = await healthModels();
+  const elapsedMs = Math.round(performance.now() - t0);
+  if (!body.isConnected) return; // navigated away mid-await
+  renderProviderBody(body, res, elapsedMs);
+}
+
+function ProviderCard() {
+  const body = h('div', { class: 'provider-card-body' });
+  const card = h('div', { class: 'card provider-card' }, [
+    h('div', { class: 'provider-card-head' }, [
+      h('h3', { text: 'Providers' }),
+      h('span', { class: 'muted', style: 'font-size: 12px;', text: `Polling every ${POLL_INTERVAL_MS / 1000}s` }),
+    ]),
+    body,
+  ]);
+
+  // First tick immediately, then start the interval.
+  tickProvider(body);
+  stopProviderPoll(); // idempotent — replace any stale handle
+  providerPollHandle = setInterval(() => tickProvider(body), POLL_INTERVAL_MS);
+
+  // Stop polling as soon as the user leaves #/dashboard. The listener
+  // removes itself in stopProviderPoll() so we don't leak.
+  providerHashListener = () => {
+    const path = (window.location.hash || '#/').slice(1);
+    if (!path.startsWith('/dashboard')) stopProviderPoll();
+  };
+  window.addEventListener('hashchange', providerHashListener);
+
+  return card;
+}
 
 export function renderDashboard(mount) {
   setChatContext({ label: 'Dashboard', where: 'dashboard' });
@@ -57,6 +186,13 @@ export function renderDashboard(mount) {
     ]),
   ]);
   mount.appendChild(grid);
+
+  mount.appendChild(h('div', { style: 'height: 16px' }));
+
+  // CONT-HEALTH-1: live provider reachability card. Polls
+  // /api/health/models every 20s while dashboard is mounted; cleaned up on
+  // hashchange away from #/dashboard.
+  mount.appendChild(ProviderCard());
 
   mount.appendChild(h('div', { style: 'height: 16px' }));
 
