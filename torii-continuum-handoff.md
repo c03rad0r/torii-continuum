@@ -1,10 +1,10 @@
 # Continuum — Session Handover
 
-**Current version:** v0.2.11-alpha
+**Current version:** v0.2.12-alpha
 
 Paste this whole block at the start of a new Perplexity Computer session to resume work seamlessly.
 
-**Active focus:** Base-path awareness + Ollama fallback landed in v0.2.6. Docs hygiene sweep across v0.2.7 → v0.2.11 (standing-rule mirror, cross-name audit, filename normalization, local-machine class scrub, this handoff refresh). Next code slice is wiring the Continuum dashboard header to `/api/health/models` so the operator sees live provider status without curl — the endpoint exists and returns real data today; the UI still shows a static "provider ready" badge.
+**Active focus:** Base-path awareness + Ollama fallback landed in v0.2.6. Docs hygiene sweep across v0.2.7 → v0.2.12 (standing-rule mirror, cross-name audit, filename normalization to `torii-continuum-*.md` across all four Space-scoped source-of-truth files, local-machine class scrub, handoff refresh, and progress log). Next code slice is wiring the Continuum dashboard header to `/api/health/models` so the operator sees live provider status without curl — the endpoint exists and returns real data today; the UI still shows a static "provider ready" badge.
 
 ---
 
@@ -129,6 +129,7 @@ cd /home/user/workspace/torii-continuum && \
 - Branch: `main`
 - Remote: `https://git-agent-proxy.perplexity.ai/ChiefmonkeyArt/torii-continuum.git`
 - Recent commits (top of `main`):
+  - `8ceb3cd` release: v0.2.11-alpha — refresh torii-continuum-handoff.md (#7)
   - `13f1769` release: v0.2.10-alpha — scrub local-machine class mentions from docs (#6)
   - `e0c7259` release: v0.2.9-alpha — rename HANDOVER.md → torii-continuum-handoff.md (#5)
   - `74e3812` release: v0.2.8-alpha — cross-name audit: clean up stale Quest references (#4)

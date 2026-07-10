@@ -2,7 +2,7 @@
 
 Living document. This will change as we learn.
 
-Source-of-truth split: this file (`strategy.md`) owns Continuum's vision, core principles, decision rules, and architecture direction. `continuum-todo.md` owns the active task queue. `torii-continuum-handoff.md` and `README.md` are the developer entry points.
+Source-of-truth split (per the `Torii` Space instructions, one set per project): this file (`torii-continuum-strategy.md`) owns Continuum's vision, core principles, decision rules, and architecture direction. `torii-continuum-todo.md` owns the active task queue. `torii-continuum-progress.md` is the release log. `torii-continuum-handoff.md` and `README.md` are the developer entry points.
 
 Continuum is a **separate app** from Torii Quest. Quest is the game; Continuum is the sovereign dashboard, project engine, and personal AI layer. They share a Space Brain (Perplexity Space `Torii`) and a namespace (`torii-*`), but they are two repos, two versioning cadences, two live surfaces:
 
@@ -75,7 +75,7 @@ Turn Continuum from a read-only mockup dashboard into a sovereign personal AI + 
   - `nostr.draft` — builds NIP-17 gift-wrapped envelopes only (inner kinds 14 / 30078 / 30081); writes to `agent/pending/`; never signs, never publishes.
 - **Explicitly not in v1**: autonomous signing / publishing, NIP-46 bunker, local Ollama fallback, Quest NPC bridge, dev-help watcher, marketplace worker, embedding-based retrieval, own relay, own Cashu mint.
 
-Full scope, success criteria, and non-goals live in `continuum-todo.md` under CONT-AGENT-1 and in the Space Brain at `projects/self-learning-continuum.md`.
+Full scope, success criteria, and non-goals live in `torii-continuum-todo.md` under CONT-AGENT-1 and in the Space Brain at `projects/self-learning-continuum.md`.
 
 ### CONT-CHARACTER-1 — character + memory infrastructure (active)
 
@@ -125,7 +125,7 @@ Adds a **sealed, local-first character stack** so the agent has a stable identit
 
 **Live today (mockup / read-only):**
 - Continuum Console page at `https://continuum-torii.pplx.app` — read-only dashboard mockup demonstrating the MVP loop (NAP zone status, gateway state, leaderboard preview, Plebeian product panel, GitHub update check).
-- `mdPatch-2` pipeline shared with Quest — `continuum-todo.md` in the whitelist, safe assistant-editable notes / appends / replaces.
+- `mdPatch-2` pipeline shared with Quest — `torii-continuum-todo.md` in the whitelist, safe assistant-editable notes / appends / replaces.
 
 **Building next (CONT-AGENT-1):**
 - VPS agent skeleton under `agent/` in this repo.
