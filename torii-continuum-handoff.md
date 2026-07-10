@@ -1,10 +1,10 @@
 # Continuum — Session Handover
 
-**Current version:** v0.2.12-alpha
+**Current version:** v0.2.13-alpha
 
 Paste this whole block at the start of a new Perplexity Computer session to resume work seamlessly.
 
-**Active focus:** Base-path awareness + Ollama fallback landed in v0.2.6. Docs hygiene sweep across v0.2.7 → v0.2.12 (standing-rule mirror, cross-name audit, filename normalization to `torii-continuum-*.md` across all four Space-scoped source-of-truth files, local-machine class scrub, handoff refresh, and progress log). Next code slice is wiring the Continuum dashboard header to `/api/health/models` so the operator sees live provider status without curl — the endpoint exists and returns real data today; the UI still shows a static "provider ready" badge.
+**Active focus:** Base-path awareness + Ollama fallback landed in v0.2.6. Docs hygiene sweep across v0.2.7 → v0.2.12. **v0.2.13 shipped CONT-HEALTH-1**: dashboard now has a live Provider card polling `/api/health/models` every 20s (Routstr enabled state + Ollama reachable/unreachable/disabled). Bonus fix: `/api/health*` responses now derive version from `agent/package.json` at boot instead of a hardcoded string. Next code slice: **real Cashu wallet health probe** — `torii doctor` today only pings the mint URL; we want a signed wallet-info call so it verifies the mint's public key and reports actual balance. Would land as a new row in the same Provider card (Wallet: Live · X sats · mint verified) and a new `/api/health/wallet` endpoint.
 
 ---
 
@@ -129,6 +129,8 @@ cd /home/user/workspace/torii-continuum && \
 - Branch: `main`
 - Remote: `https://git-agent-proxy.perplexity.ai/ChiefmonkeyArt/torii-continuum.git`
 - Recent commits (top of `main`):
+  - `<pending>` release: v0.2.13-alpha — CONT-HEALTH-1 dashboard provider card (#9)
+  - `043ad7c` release: v0.2.12-alpha — finish Space-scoped file naming migration (#8)
   - `8ceb3cd` release: v0.2.11-alpha — refresh torii-continuum-handoff.md (#7)
   - `13f1769` release: v0.2.10-alpha — scrub local-machine class mentions from docs (#6)
   - `e0c7259` release: v0.2.9-alpha — rename HANDOVER.md → torii-continuum-handoff.md (#5)
@@ -162,8 +164,8 @@ cd /home/user/workspace/torii-continuum && \
 
 Code slices (in rough priority order):
 
-- **Dashboard header → `/api/health/models`.** Endpoint returns `routstr.ok/latency`, `ollama.ok/latency/model`, `strategy`, `version`. Subscribe a small provider card in the dashboard (poll or SSE) so the operator sees live reachability + resolved strategy without curl.
-- **Real Cashu wallet health probe.** Today `torii doctor` only pings the mint URL. Fold in a signed wallet-info call so it verifies the mint's public key and can report actual balance.
+- ~~**Dashboard header → `/api/health/models`.**~~ **DONE v0.2.13-alpha** — Provider card renders under the KPI strip on `#/dashboard`, polls every 20s, three states per provider (`Enabled` / `Reachable`+`Unreachable` / `Disabled`), self-cleans on hashchange, honest about the fact that Routstr has no reachability probe yet.
+- **Real Cashu wallet health probe.** Today `torii doctor` only pings the mint URL. Fold in a signed wallet-info call so it verifies the mint's public key and can report actual balance. Ship as a new row in the same Provider card + a new `/api/health/wallet` endpoint (admin-gated, mirrors the shape of `/api/health/models`).
 - **Consent gate on `/api/chat`.** The agent will currently spend sats on any authenticated request. Add a per-session consent flag mirroring Quest's SEC-1 pattern before wiring any UI that fires chats implicitly (e.g. on page load).
 - **Multi-model Ollama routing.** Router currently picks Ollama vs Routstr but not Ollama-model-A vs Ollama-model-B. Config shape needs a small model list.
 - **Live cold-boot smoke of the Ansible playbook** on a fresh Ubuntu 24.04 VPS. Check-mode has been run; end-to-end has not.

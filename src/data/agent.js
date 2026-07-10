@@ -123,3 +123,12 @@ export async function chat({ message, context }) {
 export async function health() {
   return req('GET', '/api/health');
 }
+
+/**
+ * GET /api/health/models — provider reachability probe. Admin-gated.
+ * Returns strategy + routstr + ollama shape (see agent/index.mjs).
+ * Callers that aren't logged in get { ok:false, offline:true } via req().
+ */
+export async function healthModels() {
+  return req('GET', '/api/health/models');
+}

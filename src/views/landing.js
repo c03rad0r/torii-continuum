@@ -255,7 +255,9 @@ export function renderLanding(mount) {
       toriiSvg(),
     ]),
     h('div', { class: 'landing-copy' }, [
-      h('div', { class: 'landing-eyebrow', text: 'Torii Continuum · v0.2.6-alpha' }),
+      // Version string baked in at build time by vite.config.js `define`.
+      // Falls back to a dash so a stray build never surfaces a stale number.
+      h('div', { class: 'landing-eyebrow', text: `Torii Continuum · v${typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '—'}` }),
       h('h1', { class: 'landing-title', text: 'The Gateway Project.' }),
       h('p', { class: 'landing-lede' }, [
         'Continuum is where your projects live as nostr events, pay in Cashu, and answer to no platform. Assistant included. Custody not.',

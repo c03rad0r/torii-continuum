@@ -174,7 +174,7 @@ curl https://your-domain.com/continuum/                   # continuum SPA
 curl https://your-domain.com/continuum/api/health          # agent
 ```
 
-The last one returns `{"ok":true,"service":"torii-continuum-agent","version":"0.2.6-alpha",...}`.
+The last one returns `{"ok":true,"service":"torii-continuum-agent","version":"<agent-version>",...}` — the version string is read from `agent/package.json` at boot, so it always matches the shipped release.
 
 Chat needs you to sign in via NIP-07 on the Console (`/continuum/`),
 top up the Cashu wallet from your signer, and post a first message. See
