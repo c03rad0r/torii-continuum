@@ -1,8 +1,10 @@
 # Continuum — Session Handover
 
-**Current version:** v0.2.9-alpha
+**Current version:** v0.2.11-alpha
 
 Paste this whole block at the start of a new Perplexity Computer session to resume work seamlessly.
+
+**Active focus:** Base-path awareness + Ollama fallback landed in v0.2.6. Docs hygiene sweep across v0.2.7 → v0.2.11 (standing-rule mirror, cross-name audit, filename normalization, local-machine class scrub, this handoff refresh). Next code slice is wiring the Continuum dashboard header to `/api/health/models` so the operator sees live provider status without curl — the endpoint exists and returns real data today; the UI still shows a static "provider ready" badge.
 
 ---
 
@@ -126,12 +128,18 @@ cd /home/user/workspace/torii-continuum && \
 
 - Branch: `main`
 - Remote: `https://git-agent-proxy.perplexity.ai/ChiefmonkeyArt/torii-continuum.git`
-- Recent commits:
-  - `56107da` feat(design): match continuum.pplx.app bronze/amber aesthetic
-  - `480b891` feat(design): adopt original Torii Continuum oversight aesthetic + light theme
-  - `5969c41` fix(build): relative base so assets resolve under proxy prefixes
-  - `0baf451` feat(v0.1.0): Continuum app builder MVP
-  - `2e1664a` Initial commit
+- Recent commits (top of `main`):
+  - `13f1769` release: v0.2.10-alpha — scrub local-machine class mentions from docs (#6)
+  - `e0c7259` release: v0.2.9-alpha — rename HANDOVER.md → torii-continuum-handoff.md (#5)
+  - `74e3812` release: v0.2.8-alpha — cross-name audit: clean up stale Quest references (#4)
+  - `40f5b27` release: v0.2.7-alpha — mirror standing operating rules into HANDOVER.md (#3)
+  - `f185e67` CONT-INSTALLER-1 + CONT-AGENT-1b: base-path awareness + Ollama fallback (v0.2.6-alpha)
+  - `dc4124d` panic key: make 30097 explicitly optional (v0.2.5-alpha)
+  - `907c05e` CONT-CHARACTER-1: sealed character + memory infrastructure (v0.2.4-alpha)
+  - `94e5269` feat: v0.2.3-alpha — ornate Myōjin torii SVG
+  - `d830ec5` chore: v0.2.2-alpha — new H1 'The Gateway Project.'
+  - `51482e2` chore: v0.2.1-alpha — dark default + security hardening
+  - `cb7d4eb` feat: v0.2.0-alpha — CONT-AGENT-1 invariants + landing (mashed)
 
 ## Related projects (for cross-linking)
 
@@ -141,15 +149,30 @@ cd /home/user/workspace/torii-continuum && \
 ## Space context
 
 - Perplexity Space: **Torii** (canonical URL `https://www.perplexity.ai/spaces/torii-8qN21IWsQ7.yuEGH9oNihw`).
-- Space instructions: use `NOSTR_ARENA_MASTER_TODO.md` as truth for tasks and `Strategy-&-Next-Steps.md` for strategy. Always optimize for efficiency, security, size, speed.
+- Space instructions: source-of-truth files are Space-scoped, one set per project. For Continuum work, use:
+  - `torii-continuum-strategy.md` — strategy
+  - `torii-continuum-todo.md` — active task list
+  - `torii-continuum-progress.md` — progress log
+  - `torii-continuum-handoff.md` — this file
+- Never load a Quest / DE / Base todo or strategy file for Continuum work — cross-naming is a standing-rule violation (rule #1).
+- Optimize for efficiency, security, file size, and speed on every change.
 
-## Next likely tasks (from prior turns)
+## Next likely tasks
 
-- Wire NIP-07 signer + publish events to a real nostr relay.
-- Replace mock chat responses with a real LLM route (Routstr / Cashu).
-- Add project creation flow (blank / GitHub / ngit).
-- Persist store to IndexedDB (currently in-memory + localStorage seed).
-- User's stated intent: self-host eventually; use `continuum-torii.pplx.app` until then.
+Code slices (in rough priority order):
+
+- **Dashboard header → `/api/health/models`.** Endpoint returns `routstr.ok/latency`, `ollama.ok/latency/model`, `strategy`, `version`. Subscribe a small provider card in the dashboard (poll or SSE) so the operator sees live reachability + resolved strategy without curl.
+- **Real Cashu wallet health probe.** Today `torii doctor` only pings the mint URL. Fold in a signed wallet-info call so it verifies the mint's public key and can report actual balance.
+- **Consent gate on `/api/chat`.** The agent will currently spend sats on any authenticated request. Add a per-session consent flag mirroring Quest's SEC-1 pattern before wiring any UI that fires chats implicitly (e.g. on page load).
+- **Multi-model Ollama routing.** Router currently picks Ollama vs Routstr but not Ollama-model-A vs Ollama-model-B. Config shape needs a small model list.
+- **Live cold-boot smoke of the Ansible playbook** on a fresh Ubuntu 24.04 VPS. Check-mode has been run; end-to-end has not.
+- **IndexedDB persistence** for the frontend store (currently in-memory + localStorage seed).
+- **Real nostr relay publish** for NIP-07 events (currently mocked).
+
+Housekeeping / infra:
+
+- Consider mirroring the torii-suite Playwright `?mock=1` walkthrough as a GitHub Action for Continuum so doc-only regressions can't sneak past the version-bump rule.
+- User's stated intent: self-host eventually via `ops/ansible`; use `continuum-torii.pplx.app` until then.
 
 ## User preferences (confirmed)
 
