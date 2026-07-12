@@ -14,5 +14,8 @@
   "devDependencies": {
     "vite": "^5.4.21",
     "vitest": "^2.1.9"
+  },
+  "dependencies": {
+    "nostr-tools": "^2.23.9"
   }
 }

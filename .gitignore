@@ -36,3 +36,4 @@ agent/config.yaml
 ops/ansible/group_vars/vault.yml
 ops/ansible/group_vars/all.yml
 ops/ansible/inventory.yml
+dist/

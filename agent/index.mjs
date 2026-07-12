@@ -22,6 +22,7 @@ import { dirname, join } from 'node:path';
 import { writeFile, mkdir, unlink, readdir, readFile } from 'node:fs/promises';
 import { loadConfig } from './core/config.mjs';
 import { createAuth } from './core/auth.mjs';
+import { registerSetupRoutes } from './core/setup.mjs';
 import { createWallet } from './core/wallet.mjs';
 import { createRoutstr } from './core/routstr.mjs';
 import { createOllama } from './core/ollama.mjs';
@@ -101,6 +102,10 @@ app.addHook('onReady', async () => {
 });
 
 const auth = createAuth(cfg, { log: app.log });
+
+// Setup mode endpoints (first-run key registration)
+registerSetupRoutes(app, cfg, auth, resolve(__dirname, 'config.yaml'));
+
 const wallet = await createWallet(cfg, app.log);
 const routstr = createRoutstr(cfg, wallet, app.log);
 
