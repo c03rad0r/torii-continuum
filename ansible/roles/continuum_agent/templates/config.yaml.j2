@@ -2,7 +2,19 @@
 # config.yaml.j2 — Continuum agent configuration template
 # Rendered by Ansible. Synced to upstream config.example.yaml v0.2.6-alpha.
 
-admin_npub: "{{ continuum_admin_npub_resolved }}"
+# Setup mode: first-run onboarding via browser keygen wizard.
+# When true, admin_npubs may be empty — the wizard generates and stores
+# the admin npub on first browser visit (authenticated by setup_token).
+# When false, admin_npubs must contain a valid npub (traditional install).
+setup_mode: {{ continuum_setup_mode | default(true) }}
+setup_token: "{{ continuum_setup_token | default('') }}"
+
+{% if continuum_admin_npub_resolved | default('') | length > 0 %}
+admin_npubs:
+  - "{{ continuum_admin_npub_resolved }}"
+{% else %}
+admin_npubs: []
+{% endif %}
 
 session_secret: "{{ continuum_session_secret_resolved }}"
 session_ttl_sec: 86400

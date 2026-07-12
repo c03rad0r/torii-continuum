@@ -91,7 +91,7 @@ export function createAuth(cfg, deps = {}) {
       process.exit(1);
     }
   }
-  if (adminHexes.length === 0) {
+  if (adminHexes.length === 0 && !cfg.setup_mode) {
     console.error('[auth] no valid admin npubs found');
     process.exit(1);
   }
@@ -300,6 +300,23 @@ export function createAuth(cfg, deps = {}) {
     issueChallenge,
     verifyChallenge,
     verifySessionToken,
+    issueSessionTokenForPubkey(hex) {
+      return issueSessionToken(hex);
+    },
+    /**
+     * Dynamically register an admin pubkey (used by setup flow after
+     * browser-generated key is verified). Adds to both adminHexes and the
+     * hex→npub map so subsequent verifySessionToken() calls succeed without
+     * a restart.
+     */
+    registerAdminPubkey(hex, npub) {
+      if (!adminHexes.includes(hex)) {
+        adminHexes.push(hex);
+      }
+      if (!adminHexToNpubMap.has(hex)) {
+        adminHexToNpubMap.set(hex, npub);
+      }
+    },
     _adminHexes: adminHexes, // exposed for tests
     _challenges: challenges, // exposed for tests (read-only usage)
     _maxChallenges: maxChallenges, // exposed for tests

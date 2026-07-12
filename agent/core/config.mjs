@@ -67,8 +67,8 @@ export function loadConfig(path) {
       adminNpubs.push(cfg.admin_npub);
     }
   }
-  if (adminNpubs.length === 0) {
-    errors.push('Either admin_npubs (array) or admin_npub (string, legacy) must be set to at least one valid npub1...');
+  if (adminNpubs.length === 0 && !cfg.setup_mode) {
+    errors.push('Either admin_npubs (array) or admin_npub (string, legacy) must be set, OR set setup_mode: true for first-run key generation.');
   }
   // Replace raw config with normalized array for downstream consumers
   cfg.admin_npubs = adminNpubs;
@@ -94,6 +94,7 @@ export function loadConfig(path) {
   }
 
   // Defaults for optional fields
+  cfg.setup_mode ??= false;
   cfg.session_ttl_sec ??= 86400;
   cfg.server.cors_origins ??= [];
   cfg.cashu ??= { mints: [], low_balance_warn_sats: 500, hard_floor_sats: 100 };
@@ -113,9 +114,16 @@ export function loadConfig(path) {
   cfg.rate_limit.auth_verify_per_min ??= 20;
   cfg.rate_limit.max_challenges ??= 1000;
 
-  return Object.freeze(cfg);
+  if (!cfg.setup_mode) {
+    return Object.freeze(cfg);
+  }
+  return cfg; // mutable in setup mode — setup.mjs needs to add pubkey
 }
 
 export function agentRoot() {
   return AGENT_ROOT;
+}
+
+export function configPath(path) {
+  return path || resolve(AGENT_ROOT, 'config.yaml');
 }
