@@ -14,8 +14,8 @@
 
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test';
 
-const BASE = 'https://continuum-test.orangesync.tech';
-const AGENT = 'https://agent-test.orangesync.tech';
+const BASE = process.env.CONTINUUM_FRONTEND || 'https://continuum.example.com';
+const AGENT = process.env.CONTINUUM_AGENT_URL || 'https://agent.example.com';
 
 // Our admin keypair. Read from env (set before running) or use fallback for CI.
 // Generate: node -e "import('nostr-tools').then(m=>{const s=m.generateSecretKey();const p=m.getPublicKey(s);console.log('SK='+Buffer.from(s).toString('hex'));console.log('PK='+p);console.log('NPUB='+m.nip19.npubEncode(p));console.log('NSEC='+m.nip19.nsecEncode(Buffer.from(s)))})"

@@ -22,8 +22,8 @@
 
 import { test, expect, type Page } from '@playwright/test';
 
-const BASE = 'https://continuum-test.orangesync.tech';
-const AGENT = 'https://agent-test.orangesync.tech';
+const BASE = process.env.CONTINUUM_FRONTEND || 'https://continuum.example.com';
+const AGENT = process.env.CONTINUUM_AGENT_URL || 'https://agent.example.com';
 const FUTURE_EXP = Math.floor(Date.now() / 1000) + 86400;
 const FAKE_TOKEN = 'a.9999999999.b.c';
 

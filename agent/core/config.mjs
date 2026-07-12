@@ -46,12 +46,32 @@ export function loadConfig(path) {
   // Validate invariants
   const errors = [];
 
-  if (!cfg.admin_npub || typeof cfg.admin_npub !== 'string' || !cfg.admin_npub.startsWith('npub1')) {
-    errors.push('admin_npub must be set to a valid npub1... string');
+  // Normalize admin npubs: accept both admin_npubs (array) and admin_npub (string, legacy)
+  const adminNpubs = [];
+  if (Array.isArray(cfg.admin_npubs)) {
+    for (const npub of cfg.admin_npubs) {
+      if (typeof npub !== 'string' || !npub.startsWith('npub1')) {
+        errors.push(`admin_npubs contains invalid npub: ${npub}`);
+      } else if (npub.includes('REPLACE')) {
+        errors.push('admin_npubs contains the example placeholder — replace it with your real npub');
+      } else {
+        adminNpubs.push(npub);
+      }
+    }
+  } else if (cfg.admin_npub && typeof cfg.admin_npub === 'string') {
+    if (!cfg.admin_npub.startsWith('npub1')) {
+      errors.push('admin_npub must be a valid npub1... string');
+    } else if (cfg.admin_npub.includes('REPLACE')) {
+      errors.push('admin_npub is still the example placeholder — replace it with your real npub');
+    } else {
+      adminNpubs.push(cfg.admin_npub);
+    }
   }
-  if (cfg.admin_npub && cfg.admin_npub.includes('REPLACE')) {
-    errors.push('admin_npub is still the example placeholder — replace it with your real npub');
+  if (adminNpubs.length === 0) {
+    errors.push('Either admin_npubs (array) or admin_npub (string, legacy) must be set to at least one valid npub1...');
   }
+  // Replace raw config with normalized array for downstream consumers
+  cfg.admin_npubs = adminNpubs;
   if (!cfg.session_secret || typeof cfg.session_secret !== 'string' || cfg.session_secret.length < 64) {
     errors.push('session_secret must be >=64 hex chars (32 bytes). Generate: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"');
   }

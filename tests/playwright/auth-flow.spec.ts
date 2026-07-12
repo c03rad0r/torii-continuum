@@ -1,7 +1,7 @@
 /**
  * Auth flow tests — full login/logout cycle and post-login features.
  *
- * The agent is reachable at agent-test.orangesync.tech. For the login flow
+ * The agent is reachable at agent.example.com. For the login flow
  * to succeed in Playwright we need to:
  *   1. Inject window.nostr (NIP-07 signer stub) via addInitScript
  *   2. Intercept POST /api/auth/verify to return a valid token
@@ -19,8 +19,8 @@
 
 import { test, expect, type Page } from '@playwright/test';
 
-const BASE = 'https://continuum-test.orangesync.tech';
-const AGENT = 'https://agent-test.orangesync.tech';
+const BASE = process.env.CONTINUUM_FRONTEND || 'https://continuum.example.com';
+const AGENT = process.env.CONTINUUM_AGENT_URL || 'https://agent.example.com';
 const FUTURE_EXP = Math.floor(Date.now() / 1000) + 86400; // +24h
 const FAKE_TOKEN = 'a.9999999999.b.c'; // 4-part token that passes isLoggedIn()
 

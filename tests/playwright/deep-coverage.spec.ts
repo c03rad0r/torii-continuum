@@ -22,8 +22,8 @@
 
 import { test, expect, type Page } from '@playwright/test';
 
-const BASE = 'https://continuum-test.orangesync.tech';
-const AGENT = 'https://agent-test.orangesync.tech';
+const BASE = process.env.CONTINUUM_FRONTEND || 'https://continuum.example.com';
+const AGENT = process.env.CONTINUUM_AGENT_URL || 'https://agent.example.com';
 
 // ═══════════════════════════════════════════════════════════════
 // HELPERS

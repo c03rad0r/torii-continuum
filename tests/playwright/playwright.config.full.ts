@@ -12,7 +12,7 @@ export default defineConfig({
     ['html', { open: 'never' }],
   ],
   use: {
-    baseURL: process.env.CONTINUUM_FRONTEND || 'https://continuum.orangesync.tech',
+    baseURL: process.env.CONTINUUM_FRONTEND || 'https://continuum.example.com',
     screenshot: 'only-on-failure',
     video: {
       mode: 'on',

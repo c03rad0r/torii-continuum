@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
-const BASE = 'https://continuum.orangesync.tech';
-const AGENT = 'https://agent.orangesync.tech';
+const BASE = process.env.CONTINUUM_FRONTEND || 'https://continuum.example.com';
+const AGENT = process.env.CONTINUUM_AGENT_URL || 'https://agent.example.com';
 
 test.describe('Continuum SPA — Happy Path', () => {
 

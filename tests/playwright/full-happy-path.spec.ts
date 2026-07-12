@@ -13,8 +13,8 @@
 
 import { test, expect } from '@playwright/test';
 
-const FRONTEND = process.env.CONTINUUM_FRONTEND || 'https://continuum.orangesync.tech';
-const AGENT = process.env.CONTINUUM_AGENT || 'https://agent.orangesync.tech';
+const FRONTEND = process.env.CONTINUUM_FRONTEND || 'https://continuum.example.com';
+const AGENT = process.env.CONTINUUM_AGENT_URL || 'https://agent.example.com';
 
 // ─── Helpers ──────────────────────────────────────────────
 

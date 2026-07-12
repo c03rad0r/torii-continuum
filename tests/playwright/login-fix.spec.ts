@@ -18,11 +18,11 @@
 
 import { test, expect, type Page } from '@playwright/test';
 
-const BASE_PROD = 'https://continuum.orangesync.tech';
-const AGENT_PROD = 'https://agent.orangesync.tech';
+const BASE_PROD = process.env.CONTINUUM_FRONTEND || 'https://continuum.example.com';
+const AGENT_PROD = process.env.CONTINUUM_AGENT_URL || 'https://agent.example.com';
 
 // ═══════════════════════════════════════════════════════════
-// L — API-LEVEL VERIFICATION (agent.orangesync.tech)
+// L — API-LEVEL VERIFICATION (agent.example.com)
 // ═══════════════════════════════════════════════════════════
 
 test.describe('L — API-level login fix verification', () => {
@@ -61,7 +61,7 @@ test.describe('L — API-level login fix verification', () => {
 });
 
 // ═══════════════════════════════════════════════════════════
-// M — UI INTEGRATION (continuum.orangesync.tech)
+// M — UI INTEGRATION (continuum.example.com)
 // ═══════════════════════════════════════════════════════════
 
 test.describe('M — UI-level login fix verification', () => {

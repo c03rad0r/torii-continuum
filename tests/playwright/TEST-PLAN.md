@@ -674,7 +674,7 @@ and the UI falls back to mock behaviour. 401 responses auto-clear the session to
 - **Demo vs. agent builds.** Cases 57–60 and 70–75 are environment-sensitive.
   Gate them with a `test.skip` / `test.fixme` predicate on `isAgentConfigured`
   (probe `${AGENT}/api/health` in a beforeAll) so the suite runs cleanly on
-  both `continuum-torii.pplx.app` (demo) and `continuum.orangesync.tech` (agent).
+  both `continuum-torii.pplx.app` (demo) and `continuum.example.com` (agent).
 - **NIP-07 mocking.** Use `page.addInitScript` to install `window.nostr` before
   any navigation (cases 72–73). Combine with `page.route` to stub
   `/api/auth/verify` so the verify step is deterministic without a real signer.

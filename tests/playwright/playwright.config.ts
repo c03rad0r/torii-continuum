@@ -14,7 +14,7 @@ export default defineConfig({
     ['json', { outputFile: 'test-results.json' }],
   ],
   use: {
-    baseURL: 'https://continuum-test.orangesync.tech',
+    baseURL: process.env.CONTINUUM_FRONTEND || 'https://continuum.example.com',
     trace: 'retain-on-failure',
     screenshot: 'on',
     video: 'on',

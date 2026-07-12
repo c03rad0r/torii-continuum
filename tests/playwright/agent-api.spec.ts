@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const AGENT_URL = 'https://agent.orangesync.tech';
+const AGENT_URL = process.env.CONTINUUM_AGENT_URL || 'https://agent.example.com';
 
 test.describe('Continuum Agent API', () => {
 

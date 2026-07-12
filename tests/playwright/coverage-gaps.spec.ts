@@ -20,7 +20,7 @@
 
 import { test, expect, type Page } from '@playwright/test';
 
-const BASE = 'https://continuum-test.orangesync.tech';
+const BASE = process.env.CONTINUUM_FRONTEND || 'https://continuum.example.com';
 
 // ─── Helpers ──────────────────────────────────────────────
 

@@ -510,7 +510,7 @@ const host = cfg.server.host;
 try {
   await app.listen({ port, host });
   app.log.info(`torii-continuum-agent listening on http://${host}:${port}`);
-  app.log.info(`admin npub: ${cfg.admin_npub.slice(0, 12)}...`);
+  app.log.info(`admin npubs: ${cfg.admin_npubs.map((n) => n.slice(0, 12)).join(', ')}`);
   app.log.info(`cashu mints: ${wallet.mints.join(', ') || '(none)'}`);
   app.log.info(`routstr endpoint: ${cfg.routstr.endpoint}`);
   app.log.info(`ollama: enabled=${cfg.ollama?.enabled === true} endpoint=${cfg.ollama?.endpoint || '(default)'}`);

@@ -21,7 +21,8 @@
 
 import { test, expect, type Page } from '@playwright/test';
 
-const BASE = 'https://continuum-test.orangesync.tech';
+const BASE = process.env.CONTINUUM_FRONTEND || 'https://continuum.example.com';
+const AGENT_URL = process.env.CONTINUUM_AGENT_URL || 'https://agent.example.com';
 
 // ─── Helpers ──────────────────────────────────────────────
 
@@ -619,7 +620,7 @@ test.describe('K — Theme', () => {
 
 test.describe('L — Agent API', () => {
   test('L01: Health endpoint responds', async ({ request }) => {
-    const res = await request.get('https://agent-test.orangesync.tech/api/health');
+    const res = await request.get(`${AGENT_URL}/api/health`);
     expect(res.ok()).toBeTruthy();
     const body = await res.json();
     expect(body.ok).toBe(true);
@@ -628,7 +629,7 @@ test.describe('L — Agent API', () => {
   });
 
   test('L02: Challenge endpoint issues challenge', async ({ request }) => {
-    const res = await request.post('https://agent-test.orangesync.tech/api/auth/challenge');
+    const res = await request.post(`${AGENT_URL}/api/auth/challenge`);
     expect(res.ok()).toBeTruthy();
     const body = await res.json();
     expect(body.challenge).toBeTruthy();
@@ -638,7 +639,7 @@ test.describe('L — Agent API', () => {
   });
 
   test('L03: Verify without event fails with 400', async ({ request }) => {
-    const res = await request.post('https://agent-test.orangesync.tech/api/auth/verify', {
+    const res = await request.post(`${AGENT_URL}/api/auth/verify`, {
       data: {},
     });
     expect(res.status()).toBe(400);
@@ -652,14 +653,14 @@ test.describe('L — Agent API', () => {
       '/api/pending',
     ];
     for (const ep of endpoints) {
-      const res = await request.get(`https://agent-test.orangesync.tech${ep}`);
+      const res = await request.get(`${AGENT_URL}${ep}`);
       // 401 = auth gate active, 404 = endpoint not in this agent version
       expect([401, 404]).toContain(res.status());
     }
   });
 
   test('L05: Chat endpoint rejects without auth', async ({ request }) => {
-    const res = await request.post('https://agent-test.orangesync.tech/api/chat', {
+    const res = await request.post(`${AGENT_URL}/api/chat`, {
       data: { message: 'test' },
     });
     expect(res.status()).toBe(401);
@@ -674,20 +675,20 @@ test.describe('L — Agent API', () => {
     ];
     for (const ep of endpoints) {
       const res = ep.method === 'GET'
-        ? await request.get(`https://agent-test.orangesync.tech${ep.path}`)
-        : await request.post(`https://agent-test.orangesync.tech${ep.path}`, { data: ep.body });
+        ? await request.get(`${AGENT_URL}${ep.path}`)
+        : await request.post(`${AGENT_URL}${ep.path}`, { data: ep.body });
       expect(res.status()).toBe(401);
     }
   });
 
   test('L07: Pending draft file path validation', async ({ request }) => {
     // Should reject bad filenames
-    const res = await request.get('https://agent-test.orangesync.tech/api/pending/../../etc/passwd');
+    const res = await request.get(`${AGENT_URL}/api/pending/../../etc/passwd`);
     expect([400, 401, 404]).toContain(res.status());
   });
 
   test('L08: Health endpoint includes memory_unlocked flag', async ({ request }) => {
-    const res = await request.get('https://agent-test.orangesync.tech/api/health');
+    const res = await request.get(`${AGENT_URL}/api/health`);
     const body = await res.json();
     expect(body).toHaveProperty('memory_unlocked');
     expect(typeof body.memory_unlocked).toBe('boolean');
